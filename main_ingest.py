@@ -23,12 +23,13 @@ def process_single_path(client: SharePointClient, sp_path: str) -> list[str]:
         return []
 
     file_name = os.path.basename(sp_path.rstrip('/'))
+    # If the path contains a dot extension -> Treat as individual file, else as folder
     if "." in file_name:
         downloaded = client.download_file_by_path(sp_path, settings.LOCAL_INGEST_DIR)
-        return [downloaded] if downloaded else []
+        return [str(downloaded)] if downloaded else []
     else:
         downloaded_list = client.download_folder_by_path(sp_path, settings.LOCAL_INGEST_DIR)
-        return downloaded_list or []
+        return [str(p) for p in downloaded_list] if downloaded_list else []
 
 def run_ingest(raw_paths: list[str]):
     print("=" * 60)

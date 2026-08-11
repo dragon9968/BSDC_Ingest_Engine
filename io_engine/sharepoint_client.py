@@ -1,141 +1,153 @@
-import os
+import json
+import re
 import urllib.parse
 from pathlib import Path
 from playwright.sync_api import sync_playwright
 from config import settings
 
+
 class SharePointClient:
     def __init__(self):
+        # Dùng trực tiếp settings.SITE_URL
+        self.site_url = settings.SITE_URL
         self.auth_dir = settings.BASE_DIR / "workspace" / ".auth"
         self.auth_dir.mkdir(parents=True, exist_ok=True)
         self.session_file = self.auth_dir / "state.json"
 
-    def _get_authenticated_context(self, p):
-        browser = p.chromium.launch(headless=False)
-        
-        if self.session_files.exists():
+    def _ensure_authenticated(self, p):
+        """Check authentication session. Trigger browser login if session is missing."""
+        if self.session_file.exists():
             print("🔑 Found saved Session, reusing...")
-            context = browser.new_context(storage_state=str(self.session_file))
-        else:
-            print("🌐 No Session found! Opening browser for SharePoint login...")
-            context = browser.new_context()
-            page = context.new_page()
-            page.goto(settings.SITE_URL)
+            return
 
-            print("\n" + "=" * 75)
-            print("👉 PLEASE LOG IN AND COMPLETE 2FA AUTHENTICATION ON YOUR PHONE")
-            print("⏳ System automatically waiting for your authentication (Max 2 minutes)...")
-            print("=" * 75 + "\n")
+        print("🌐 No Session found! Opening browser for SharePoint login...")
+        browser = p.chromium.launch(headless=False)
+        context = browser.new_context()
+        page = context.new_page()
 
-            try:
-                # Playwright actively listens for browser redirection to SharePoint
-                page.wait_for_url(lambda url: "sharepoint.com" in url.lower() and "login" not in url.lower(), timeout=120000)
-                page.wait_for_timeout(3000)  # Wait 3s for full cookie/session recording
-                
-                context.storage_state(path=str(self.session_file))
-                print("✅ Authentication successful & saved new Session to workspace/.auth/state.json!")
-            except Exception as e:
-                browser.close()
-                raise TimeoutError("❌ Exceeded 2 minutes without completing login/2FA on phone!")
+        page.goto(self.site_url)
+        print("👉 PLEASE LOG IN AND COMPLETE 2FA AUTHENTICATION ON YOUR PHONE")
+        print("⏳ System automatically waiting for your authentication (Max 2 minutes)...")
 
-        return browser, context
+        try:
+            page.wait_for_url(
+                re.compile(r".*sharepoint\.com.*", re.IGNORECASE), timeout=120000
+            )
+            page.wait_for_timeout(3000)
+            context.storage_state(path=str(self.session_file))
+            print("✅ Authentication successful & saved new Session to workspace/.auth/state.json!")
+        except Exception:
+            raise TimeoutError("❌ Exceeded 2 minutes without completing login/2FA on phone!")
+        finally:
+            browser.close()
 
-    def _validate_and_save_download(self, body: bytes, local_file_path: str, file_name: str):
-        """Check: If SharePoint returns HTML (expired session), automatically destroy session and report error"""
-        if b"<html" in body[:100].lower() or b"<!doctype" in body[:100].lower():
-            if self.session_files.exists():
-                self.session_files.unlink() # Auto-delete corrupted Session
-            raise PermissionError(f"\n❌ ERROR: SESSION EXPIRED! SharePoint refused to serve file [{file_name}] and forced login.\n"
-                                  f"💡 System automatically deleted old Session. PLEASE RE-RUN THE COMMAND ON n8n to open the browser again!")
-        
-        # Save normally if it's a real file
-        with open(local_file_path, "wb") as f:
-            f.write(body)
+    def _check_html_response(self, content_bytes: bytes, file_name: str):
+        """Check if SharePoint returned HTML (expired session) -> Delete session and raise error"""
+        content_head = content_bytes[:500].decode("utf-8", errors="ignore").lower()
+        if "<!doctype html" in content_head or "<html" in content_head:
+            if self.session_file.exists():
+                self.session_file.unlink()
+            raise PermissionError(
+                f"\n❌ ERROR: SESSION EXPIRED! SharePoint refused to serve [{file_name}] and forced login.\n"
+                f"💡 Old Session deleted. PLEASE RE-RUN THE COMMAND ON n8n to open browser again!"
+            )
 
-    def download_file_by_path(self, sp_file_path: str, local_dir: str) -> str:
-        """Download a specific file from SharePoint using raw Playwright API Request Context"""
-        sp_file_path = sp_file_path.strip().strip('"').strip("'").replace('\\', '/').lstrip('/')
-        file_name = os.path.basename(sp_file_path)
-        local_file_path = str(Path(local_dir) / file_name)
-
-        if not sp_file_path.startswith('/'):
-            server_relative_url = f"/sites/professional_services/{sp_file_path}"
-        else:
-            server_relative_url = sp_file_path
-
-        encoded_url = urllib.parse.quote(server_relative_url, safe='/')
-        base_site = getattr(self, 'site_url', 'https://sharetec.sharepoint.com/sites/professional_services').rstrip('/')
-        api_url = f"{base_site}/_api/web/GetFileByServerRelativeUrl('{encoded_url}')/$value"
+    def download_file_by_path(self, server_relative_url: str, output_dir: Path) -> Path:
+        """Download a specific file from SharePoint using raw Playwright API Context"""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
+        file_name = Path(server_relative_url).name
 
         print(f"📥 Downloading individual file via Playwright API:\n   👉 Path: {server_relative_url}")
 
-        try:
-            with sync_playwright() as p:
-                # If no Session file exists (deleted due to expiration), trigger creation of new Session
-                if not self.session_files.exists():
-                    browser, _ = self._get_authenticated_context(p)
-                    browser.close()
+        with sync_playwright() as p:
+            self._ensure_authenticated(p)
 
-                context = p.request.new_context(storage_state=str(self.session_file))
-                response = context.get(api_url, timeout=0)
+            request_context = p.request.new_context(
+                storage_state=str(self.session_file)
+            )
 
-                if response.status == 200:
-                    os.makedirs(local_dir, exist_ok=True)
-                    self._validate_and_save_download(response.body(), local_file_path, file_name)
-                    print(f"   ✅ Successfully downloaded individual file: {file_name}")
-                    return local_file_path
-                else:
-                    print(f"   ❌ SHAREPOINT API ERROR ({response.status}): Failed to download files.")
-        except Exception as e:
-            print(f"   💥 File download error: {e}")
+            encoded_url = urllib.parse.quote(server_relative_url)
+            api_endpoint = f"{self.site_url}/_api/web/getfilebyserverrelativeurl('{encoded_url}')/$value"
 
-        return None
-    
-    def download_folder_by_path(self, folder_relative_path: str, target_local_dir: str) -> list:
-        os.makedirs(target_local_dir, exist_ok=True)
-        downloaded_files = []
+            headers = {"Accept": "application/json;odata=verbose"}
+            response = request_context.get(api_endpoint, headers=headers)
 
-        parsed_site = urllib.parse.urlparse(settings.SITE_URL)
-        site_path = parsed_site.path.rstrip('/')
-        clean_rel_path = folder_relative_path.strip('/')
-        server_relative_folder_url = f"{site_path}/{clean_rel_path}"
-        encoded_folder_url = urllib.parse.quote(server_relative_folder_url, safe='/')
+            if response.status == 200:
+                file_bytes = response.body()
+                self._check_html_response(file_bytes, file_name)
 
-        api_url = f"{settings.SITE_URL}/_api/web/GetFolderByServerRelativeUrl('{encoded_folder_url}')/Files"
+                dest_file = output_dir / file_name
+                dest_file.write_bytes(file_bytes)
+                print(f"   ✅ Successfully downloaded individual file: {file_name}")
+                return dest_file
+            else:
+                print(f"   ❌ SHAREPOINT API ERROR ({response.status}): Failed to download file.")
+                return None
+
+    def download_folder(self, folder_relative_path: str, output_dir: Path) -> list[Path]:
+        """Download all files from a SharePoint folder"""
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         print(f"📂 Scanning file list in directory: [{folder_relative_path}]...")
 
         with sync_playwright() as p:
-            browser, context = self._get_authenticated_context(p)
+            self._ensure_authenticated(p)
 
-            response = context.request.get(api_url, headers={"Accept": "application/json;odata=verbose"})
+            request_context = p.request.new_context(
+                storage_state=str(self.session_file)
+            )
+
+            encoded_folder = urllib.parse.quote(folder_relative_path)
+            api_endpoint = f"{self.site_url}/_api/web/getfolderbyserverrelativeurl('{encoded_folder}')/files"
+
+            headers = {"Accept": "application/json;odata=verbose"}
+            response = request_context.get(api_endpoint, headers=headers)
 
             if response.status != 200:
-                browser.close()
-                raise FileNotFoundError(f"❌ Cannot read directory (Status {response.status})")
+                print(f"❌ SHAREPOINT API ERROR: Status {response.status}")
+                return []
 
-            data = response.json()
+            body_bytes = response.body()
+            self._check_html_response(body_bytes, folder_relative_path)
+
+            try:
+                data = response.json()
+            except Exception as e:
+                print(f"❌ Failed to parse JSON from SharePoint response: {e}")
+                if self.session_file.exists():
+                    self.session_file.unlink()
+                    print("💡 Deleted invalid session file. Please rerun to re-authenticate.")
+                return []
+
             files_list = data.get("d", {}).get("results", [])
             print(f"🎉 Found {len(files_list)} files in directory!")
 
+            downloaded_files = []
             for file_info in files_list:
-                file_name = file_info.get("Name")
-                file_server_url = file_info.get("ServerRelativeUrl")
-                local_file_path = os.path.join(target_local_dir, file_name)
+                f_name = file_info["Name"]
+                f_rel_url = file_info["ServerRelativeUrl"]
 
-                encoded_file_url = urllib.parse.quote(file_server_url, safe='/')
-                download_url = f"{settings.SITE_URL}/_layouts/15/download.aspx?SourceUrl={encoded_file_url}"
+                f_encoded = urllib.parse.quote(f_rel_url)
+                file_val_url = f"{self.site_url}/_api/web/getfilebyserverrelativeurl('{f_encoded}')/$value"
 
-                print(f"⬇️ Downloading: {file_name}...")
-                file_resp = context.request.get(download_url, timeout=0)
-                
+                print(f"⬇️ Downloading: {f_name}...")
+                file_resp = request_context.get(file_val_url)
+
                 if file_resp.status == 200:
-                    self._validate_and_save_download(file_resp.body(), local_file_path, file_name)
-                    downloaded_files.append(local_file_path)
-                    print(f"   ✅ Saved file: {file_name}")
+                    f_bytes = file_resp.body()
+                    self._check_html_response(f_bytes, f_name)
+
+                    dest_path = output_dir / f_name
+                    dest_path.write_bytes(f_bytes)
+                    downloaded_files.append(dest_path)
+                    print(f"   ✅ Saved file: {f_name}")
                 else:
-                    print(f"   ❌ Error downloading file {file_name}: Status {file_resp.status}")
+                    print(f"   ❌ Error downloading file {f_name}: Status {file_resp.status}")
 
-            browser.close()
+            return downloaded_files
 
-        return downloaded_files
+    # Aliases for backward compatibility with different function naming formats
+    download_folder_by_path = download_folder
+    download_file = download_file_by_path
