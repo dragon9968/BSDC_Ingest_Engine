@@ -1,0 +1,549 @@
+ID,ProfessionType,Descripción,Description,BSARanking
+ ,3,ASOCIACIONES,ASOCIACIONES,M
+ ,4,ADMINISTRADORES HOSPITALES,ADMINISTRADORES HOSPITALES,L
+ ,5,CONYUGE DEL SOCIO BASE,CONYUGE DEL SOCIO BASE,M
+ ,6,DENTISTA,DENTISTA,M
+ ,7,EMPLEADOS MEDICOOP (SOCIOS BASE),EMPLEADOS MEDICOOP (SOCIOS BASE),H
+ ,8,FARMACEUTICOS,FARMACEUTICOS,M
+ ,9,PROGENITOR,PROGENITOR,M
+ ,10,HIJO DEL SOCIO BASE,HIJO DEL SOCIO BASE,M
+ ,11,AUDIOLOGOS,AUDIOLOGOS,M
+ ,12,HIJO DE CRIANZA,HIJO DE CRIANZA,M
+ ,14,PATOLOGOS,PATOLOGOS,L
+ ,15,MEDICOS,MEDICOS,M
+ ,16,TERAPISTAS,TERAPISTAS,M
+ ,17,OPTOMETRAS,OPTOMETRAS,M
+ ,18,PODIATRAS,PODIATRAS,M
+ ,19,SOCIOS HACIENDO ESP. O SERV.,SOCIOS HACIENDO ESP. O SERV.,H
+ ,20,SICOLOGOS,SICOLOGOS,M
+ ,21,TECNOLOGOS MEDICOS,TECNOLOGOS MEDICOS,L
+ ,22,TECNOLOGOS MED. NUCLEAR,TECNOLOGOS MED. NUCLEAR,M
+ ,23,SOCIOS SIN VINCULO,SOCIOS SIN VINCULO,H
+ ,24,SUCECIONES,SUCECIONES,H
+ ,25,YERNOS,YERNOS,M
+ ,26,NO DEFINIDO,NO DEFINIDO,H
+ ,27,Abogado,Lawyer,H
+ ,28,Actor / Actriz Dramático,Dramatic Actor /Actress,H
+ ,29,Administrador,Administrator,L
+ ,30,Administrador de Cementerios,Cementery Administrator,M
+ ,31,Administrador de Edificios,Building Administrator,M
+ ,32,Administrador de Escuelas,Schools Administrator,L
+ ,33,Administrador de Instituciones Correccionales,Correctional Institution Administrator,M
+ ,34,Administrador de Personal,Personal Administrator,M
+ ,35,Administrador de Records Médicos,Medical Record Administrator,M
+ ,36,Administrador de Seguridad,Security Administrator,L
+ ,37,Administrador de Seguros de Salud,Health Insurance Administrator,M
+ ,38,Agente de Rentas Internas,Internal Revenue Agent,L
+ ,39,Agente de Seguros,Insurance Agent,M
+ ,40,Agente de Estación de Tren,Train Station Agent,L
+ ,41,Agente de Publicidad,Publicity Agent,M
+ ,42,Agente de Viajes,Agent of Trips,L
+ ,43,Agente Federal,Federal Agent,L
+ ,44,Agricultor,Farmer,M
+ ,45,Agrimensor,Surveyor,L
+ ,46,Agronomo,Agronomist,M
+ ,47,Albañil,Bricklayer,M
+ ,48,Alcalde,Mayor,M
+ ,49,Alguacil,US Marshal,L
+ ,50,Ama de Casa,Housewife,L
+ ,51,Ama de Llaves,Housekeeper,L
+ ,52,Analista de Derechos Civiles,Civil Rights Analyst,M
+ ,53,Analista de Presupuesto,Budged Analyst,L
+ ,54,Analista de Sistemas,System Analyst,L
+ ,55,Analista de Transporte Industrial,Transportation Ind. Analyst,M
+ ,56,Analista Financiero,Financial Analyst,M
+ ,57,Anestesiologo,Anesthesiologist,M
+ ,58,Antropologo,Antropologist,M
+ ,59,Arqueologo,Archeologist,M
+ ,60,Arquitecto,Architest,M
+ ,61,Arquitecto Naval,Naval Architect,M
+ ,62,Arrendador de Edificios,Lessor Buildings,M
+ ,63,Artesano,Artisan,M
+ ,64,Artista Comercial,Commercial Artist,M
+ ,65,Artista Gráfico,Graphic Artist,L
+ ,66,Asistente Protección del Ambiente,Enviromental Protection Assistant,L
+ ,67,Asistente Administrativo,Administrative Assistant,L
+ ,68,Asistente de Enfermeria,Nurse Assistant,L
+ ,69,Asistente de Finanzas,Assistant of Finance,L
+ ,70,Asistente de Gerente,Assistant Manager,M
+ ,71,Asistente de Ingeniero,Enginner Assistant,L
+ ,72,Asistente de Maestro,Teachers Assistant,L
+ ,73,Asistente Médico,Doctors Assistant,L
+ ,74,Asistente de Presupuesto,Budget Assistant,L
+ ,75,Asistente de Recursos Humanos,Human Resources Assistant,L
+ ,76,Asistente de Seguridad,Security Assistant,L
+ ,77,Asistente de Tráfico Aereo,Air Traffic Assistant,M
+ ,78,Asistente de Vuelo,Fly Attendant,M
+ ,79,Asistente Dental,Dental Assistant,L
+ ,80,Asistente Investigativo,Investigative Assistant,M
+ ,81,Astronomo,Astronomer,L
+ ,82,Atleta,Athlete,L
+ ,83,Auditor,Auditor,M
+ ,84,Auxiliar de Contabilidad,Auxiliary Accountant,M
+ ,85,Auxiliar de Farmacia,Pharmacy Assistant,L
+ ,86,Avicultor,Poultry Breeder,L
+ ,87,Ayudante de Supervisor,Supervisor Assistant,L
+ ,88,Ayudante Tapicero,Upholsterer Assistant,L
+ ,89,Bailarin / Bailarina,Dancer,L
+ ,90,Barbero,Barber,L
+ ,91,Beneficiario Seguro Social,Social Security Beneficiary,L
+ ,92,Bibliotecaria / Bibliotecario,Librarian,L
+ ,93,Bienes Raices,Real Estate,L
+ ,94,Biologo,Biologist,M
+ ,95,Biologo Marino,Marine Biologist,M
+ ,96,Bombero,Fireman,L
+ ,97,Cajero,Cashier,L
+ ,98,Camarero,Chamberlain,L
+ ,99,Cantante,Singer,L
+ ,100,Cantinero,Bartender,M
+ ,101,Capataz,Foreman,L
+ ,102,Capitan de Barcos,Ship Captain,M
+ ,103,Carnicero,Butcher,L
+ ,104,Carpintero,Carpenter,M
+ ,105,Cartero,Postman,L
+ ,106,Cartografo,Cartographic,L
+ ,107,Cerrajero,Locksmith,L
+ ,108,Chofer,Driver,M
+ ,109,Conductor de Camiones,Truck Driver,M
+ ,110,Chofer de Trenes,Train Driver,L
+ ,111,Científico,Scientist,M
+ ,112,Cirujano,Surgeon,M
+ ,113,Clase Graduanda,Group (Students) to be Graduate,M
+ ,114,Cobrador,Collector,M
+ ,115,Cocinero,Chef,L
+ ,116,Comandante de la Policia,Police Commander,L
+ ,117,Comprador Materiales de Escuela,School Materials Buyer,L
+ ,118,Consejero Ocupacional,Ocupational Counsellor,L
+ ,119,Conserje,Janitor,L
+ ,120,Consultor,Consultant,L
+ ,121,Consultor de Construcción,Construction Consultant,M
+ ,122,Contador,Accountant,M
+ ,123,Contratista de Residencias,Residence Contractor,L
+ ,124,Controlador de Tráfico Aereo,Air Traffic Controller,M
+ ,125,Cooperativa Escolar,Scholar Cooperative,M
+ ,126,Coordinador de Actividades,Activities Coordinator,M
+ ,127,Coordinador de Reciclaje,Coordinator of Recycling,L
+ ,128,Coordinador de Ventas,Sales Coordinator,M
+ ,129,Coordinador de Programas de Salud,Health Programs Coordinator,L
+ ,130,Corredor Valores,Agent of Values,M
+ ,131,Cosmetologa,Cosmetologist,M
+ ,132,Costurera,Seamstress,L
+ ,133,Cuido de Envejecientes,Elders Care,L
+ ,134,Cuido de Niños,Babysitter,M
+ ,135,Dealer de Autos,Car Dealer,H
+ ,136,Dealer de Botes,Boat Dealer,H
+ ,137,Decorador,Decorator,M
+ ,138,Delineante,Delineate,L
+ ,139,Dentista,Dentist,M
+ ,140,Desempleado,Unemployed,L
+ ,141,Dietista,Dietician,M
+ ,142,Director Asociado,Associated Director,M
+ ,143,Director Centro de Peajes,Toll Center Director,M
+ ,144,Director de Escuela,School Director,M
+ ,145,Director de Finanzas,Finance Director,M
+ ,146,Director Médico,Medical Director,L
+ ,147,Director Programa Federal,Federal Program Director,L
+ ,148,Diseñador,Designer,M
+ ,149,Diseñador de Interiores,Interiors Designer,M
+ ,150,Distribuidor de Mercancias,Merchandiser,M
+ ,151,Dueño Compañia Sistemas Computadoras,Computer Systems Company Owner,M
+ ,152,Dueño Compañia Puertas y Ventanas,Windows & Doors Company Owner,M
+ ,153,Dueño Tienda Artesania,Artisan Shop Owner,M
+ ,154,Dueño Venta Piezas de Auto,Auto Parts Sales Owner,M
+ ,155,Dueño Alquiler Equipo Entretenimiento,Owner Entertainment Equipment,M
+ ,156,Dueño Centro Cuido de Niños,Owner Child Care Center,M
+ ,157,Dueño Centro Gomas de Auto,Auto Tire Center Owner,M
+ ,158,Dueño Colmado o Tienda,Grocery Store Owner,H
+ ,159,Dueño Compañia Construcción,Construction Company Owner,M
+ ,160,Dueño Compañia de Seguridad,Security Company Owner,H
+ ,161,Dueño Compañia Sellado de Techos,Sealed Roofs Company Owner,M
+ ,162,Dueño de Farmacia,Pharmacy Owner,M
+ ,163,Dueño de Ferreteria,Hardware Store Owner,M
+ ,164,Dueño de Floristeria,Flower Shop Owner,M
+ ,165,Dueño de Funeraria,Funeral Parlor Owner,M
+ ,166,Dueño de Hospedaje,Lodging Owner,M
+ ,167,Dueño de Licoreria,Liquor Store Owner,H
+ ,168,Dueño de Muebleria,Furniture Store Owner,M
+ ,169,Dueño de Panaderia,Bakery Owner,M
+ ,170,Dueño de Perfumeria,Perfumes Store Owner,M
+ ,171,Dueño de Restaurante,Restaurant Owner,M
+ ,172,Dueño de Salón de Belleza,Beauty Salon Owner,M
+ ,173,Dueño de Supermercado,Supermarket Owner,H
+ ,174,Dueño de Equipo de Sonido,Disk Jockey,M
+ ,175,Dueño Estación Cambio de Cheques,Check Cashing Station Owner,H
+ ,176,Dueño Estación de Gasolina,Gas Station Owner,H
+ ,177,Dueño Laboratorio Clínico,Clinical Laboratory Owner,M
+ ,178,Dueño Máquinas Dulces y Refrescos,Vending Machines Owner,M
+ ,179,Dueño Negocio Cortinas de Lona,Canvas Curtains Business Owner,M
+ ,180,Dueño Restaurante Mobil,Mobile Restaurant Owner,M
+ ,181,Dueño Taller de Hojalateria,Tinsmith Shop Owner,M
+ ,182,Dueño Tienda Celulares,Owner Cellular Phone Store,M
+ ,183,Dueño Tienda de Matress,Owner of Matress Store,M
+ ,184,Dueño Tienda de Zapatos,Shoe Store Owner,M
+ ,185,Dueño Tienda Efectos Agricolas,Agriculture Effects Store Owner,M
+ ,186,Dueño Tienda Venta de Mascotas,Pet Shop Owner,M
+ ,187,Ebanista,Cabinet Maker,M
+ ,188,Economista,Economist,L
+ ,189,Educador de Salud,Health Educator,L
+ ,190,Ejecutivo de Ventas,Sales Executive,M
+ ,191,Electricista,Electrician,M
+ ,192,Embalsamador,Work in Funeral Home,L
+ ,193,Empacador,Bagger,L
+ ,194,Empleado CDT,CDT Employee,L
+ ,195,Empleado Centro Cuido de Niños,Child Care Center Employee,L
+ ,196,Empleado Comedor Escolar,School Dining Room Employee,L
+ ,197,Empleado Compañia de Escrines,Screens Company Owner,L
+ ,198,Empleado Compañia de Asfalto,Asphalt Company Employee,L
+ ,199,Empleado Compañia de Seguros,Insurance Company Employee,L
+ ,200,Empleado de Almacen,Warehouse Employee,L
+ ,201,Empleado de Cafeteria,Cafeteria Employee,L
+ ,202,Empleado de Colmado,Grocery Store Employee,L
+ ,203,Empleado de Conservación,Conservation Employee,L
+ ,204,Empleado de Consorcio,Consortium Employee,L
+ ,205,Empleado de Construcción,Construction Employee,M
+ ,206,Empleado de Fábrica,Manufacture Employee,L
+ ,207,Empleado de Farmacia,Pharmacy Employee,L
+ ,208,Empleado de Ferreteria,Hardware Store Employee,L
+ ,209,Empleado de Joyeria,Jewerly Store Employee,L
+ ,210,Empleado de Lavanderia,Laundromat Employee,L
+ ,211,Empleado de Licoreria,Liquor Store Employee,L
+ ,212,Empleado de Mantenimiento,Maintenance Employee,L
+ ,213,Empleado de Manufactura,Manufacture Employee,L
+ ,214,Empleado de Muebleria,Furniture Store Employee,L
+ ,215,Empleado de Museo,Museum Employee,L
+ ,216,Empleado de Puertos,Port Employee,M
+ ,217,Empleado de Restaurante,Fast Food Employee,L
+ ,218,Empleado de Supermercado,Supermarket Employee,L
+ ,219,Empleado de Tienda de Dulces,Candy Store Employee,L
+ ,220,Empleado Depto. Trabajo,Labor Department Employee,L
+ ,221,Empleado Depto. De la Familia,Employee of Family Department,L
+ ,222,Empleado Doméstico,Domestic Employee,L
+ ,223,Empleado Estación Gasolinera,Gas Station Employee,L
+ ,224,Empleado Estación de Peaje,Toll Center Employee,L
+ ,225,Empleado Municipal,Municipality Employee,L
+ ,226,Empleado Obras Públicas,Public Labor Employee,L
+ ,227,Empleado Postal,Postal Employee,L
+ ,228,Empleado Recreación y Deportes,Recreational & Sports Employee,L
+ ,229,Empleado Recursos Naturales,Natural Resources Employee,L
+ ,230,Empleado Tiendas Piezas de Auto,Auto Parts Store Employee,L
+ ,231,Empleado Tienda por Departamentos,Department Store Employee,L
+ ,232,Encargada Comedor Escolar,School Dining Room Supervisor,L
+ ,233,Enfermera (o),Nurse,L
+ ,234,Entrenador de Animales,Animal Trainer,L
+ ,235,Entrenador de Personal,Workers Trainer,L
+ ,236,Entrenador Personal,Personal Trainer,M
+ ,237,Escritor,Writer,L
+ ,238,Escuela,School,M
+ ,239,Escultor,Scultor,M
+ ,240,Especialista Protección del Ambiente,Enviromental Protection Specialist,L
+ ,241,Especialista en Telecomunicaciones,Telecomunication Specialist,L
+ ,242,Estación de Gasolina,Gas Station,H
+ ,243,Estilista,Stylist,L
+ ,244,Estudiante,Student,L
+ ,245,Examinador de Impuestos,Tax Examinator,L
+ ,246,Examinador de Reclamaciones,Claims Examinator,L
+ ,247,Examinador Instituciones Financieras,Financial Institution Examiner,L
+ ,248,Excavador,Digger,M
+ ,249,Fabricador de Metales,Metal Fabricator,L
+ ,250,Farmaceutico,Pharmaceutical,M
+ ,251,Farmacia,Pharmacy,H
+ ,252,Ferreteria,Hardware,H
+ ,253,Fiscal,Fiscal,L
+ ,254,Físico,Physicist,L
+ ,255,Florista,Florist,L
+ ,256,Fotografo,Photographer,M
+ ,257,Fuerzas Armadas,Army Forces,L
+ ,258,Fumigador,Fumigator,L
+ ,259,Ganadero,Cattle Raiser,M
+ ,260,Geologo,Geologist,L
+ ,261,Gerente,Manager,M
+ ,262,Gerente Administración Pública,Public Administration Manager,L
+ ,263,Gerente de Finanzas,Finance Manager,M
+ ,264,Gerente de Imprenta,Printing Manager,M
+ ,265,Gerente de Inventario,Inventory Manager,M
+ ,266,Gerente de Manufactura,Manufacturing Manager,M
+ ,267,Gerente de Recursos Humanos,Human Resources Manager,M
+ ,268,Gerente de Seguros,Insurance Manager,M
+ ,269,Gerente de Ventas,Sales Manager,M
+ ,270,Gerente Financiero,Financial Management,L
+ ,271,Gerente Sistemas de Información,EDP Manager,M
+ ,272,Gerente Sucursal Cooperativa,Credit Union Branch Manager,M
+ ,273,Gestión (Mensajero),Messenger,L
+ ,274,Guarda Bosques,Park Ranger,L
+ ,275,Guardia de Seguridad,Security Guard,L
+ ,276,Guardia Privado,Private Guard,L
+ ,277,Guardia Escolar,School Guard,L
+ ,278,Guardia Municipal,Municipal Guard,L
+ ,279,Guardia Nacional,National Guard,L
+ ,280,Guia Turistico,Tour Guide,M
+ ,281,Hidrologo,Hydrologist,M
+ ,282,Hojalatero,Tinsmith,M
+ ,283,Iglesia Católica,Catholic Church,M
+ ,284,Iglesia Luterana,Luteran Church,M
+ ,285,Iglesia Protestante,Protestant Church,M
+ ,286,Incapacitado,Handycap,L
+ ,287,Ingeniero,Enginner,M
+ ,288,Ingeniero Aeroespacial,Aerospace Enginner,M
+ ,289,Ingeniero Aeronautico,Aeronautical Engineer,L
+ ,290,Ingeniero Agricultor,Engunner Agronomist,L
+ ,291,Ingeniero Ambiental,Envoromental Engineer,L
+ ,292,Ingeniero Biomedico,Biomedical Engineer,M
+ ,293,Ingeniero Civil,Civil Engineer,L
+ ,294,Ingeniero Petroleo,Petroleum Engineer,M
+ ,295,Ingeniero de Ambiente,Envorimental Engineer,L
+ ,296,Ingeniero Eléctrico,Electric Engineer,M
+ ,297,IngenieroElectrónico,Electronic Engineer,M
+ ,298,Ingeniero de Computadoras,Computer Engineer,L
+ ,299,Ingeniero Industrial,Industrial Enginner,L
+ ,300,Ingeniero Marino,Marine Engineer,L
+ ,301,Ingeniero Mecánico,Mechanic Engineer,L
+ ,302,Ingeniero Nuclear,Nuclear Engineer,L
+ ,303,Ingeniero Químico,Chemical Engineer,L
+ ,304,Inspector Ambiental,Enviromental Inspector,L
+ ,305,Inspector de Drogas y Alcohol,Drugs and Alcohol Inspector,L
+ ,306,Inspector de Inmigración,Inmigration Inspector,M
+ ,307,Inspector de Salud Pública,Public Health Inspector,L
+ ,308,Inspector de Servicio Público,Service Public Inspector,L
+ ,309,Inspector de Fábrica,Manufacture Inspector,L
+ ,310,Inst. Sin Fines de Lucro,Nonprofit Institution,M
+ ,311,Instalador Accesorios de Auto,Car Accessories Installer,L
+ ,312,Instalador Aires Acondicionados,Air Conditioning Installer,M
+ ,313,Instalador de Escrines,Sreen Installer,L
+ ,314,Instalador Gibson Board,Gibson Board Installer,L
+ ,315,Instalador Puertas y Ventanas,Windows & Doors Installer,L
+ ,316,Institución Financiera,Financial Institution,H
+ ,317,Instructor de Caballos,Horses Trainer,L
+ ,318,Instructor de Gimnasio,Gym Instructor,L
+ ,319,Instrumentista,Instrumentalist,L
+ ,320,Interprete,Translator,L
+ ,321,Investigador Criminal,Criminal Investigator,M
+ ,322,Insvestigador de Seguridad Aerea,Air Security Investigator,M
+ ,323,Investigador General,General Investigator,L
+ ,324,Investigador Privado,Private Investigator,M
+ ,325,Jardinero,Gardener,M
+ ,326,Jefe de Correo,Postmaster,M
+ ,327,Joyero,Jeweller,H
+ ,328,Juez,Judge,L
+ ,329,Jugador de Beisbol,Baseball Player,L
+ ,330,Lavaplatos,Dish Washer,L
+ ,331,Legislador,Legislator,M
+ ,332,Locutor,Radio Announcer,L
+ ,333,Maestro de Escuela,Teacher,L
+ ,334,Manicurista,Manicurist,L
+ ,335,Maquillista,Make Up,L
+ ,336,Marino,Marine,L
+ ,337,Matemático,Mathematical,L
+ ,338,Mecánico de Autos,Auto Mechanic,M
+ ,339,Mecánico de Aviones,Airplane Mechancic,M
+ ,340,Mecánico de Elevadores,Elevator Mecanic,M
+ ,341,Mecánico de Equipo Industrial,Industrial Equipment Mechanic,M
+ ,342,Mecánico de Trenes,Train Mechanic,M
+ ,343,Mecánico Industrial,Industrail Mechanic,M
+ ,344,Medico,Doctor,M
+ ,345,Menor de Edad,Minor,L
+ ,346,Mensajero,Messenger,L
+ ,347,Meteorólogo,Meteorologist,L
+ ,348,Microbiologo,Microbiologist,M
+ ,349,Militar,Military,L
+ ,350,Ministro de Iglesia,Minister,M
+ ,351,Modelo,Model,M
+ ,352,Modista,Dressmaker,L
+ ,353,Mozo,Waiter,M
+ ,354,Músico,Musician,M
+ ,355,Nutricionista,Nutricionist,M
+ ,356,Obrero de Carga,Worker of Freight,L
+ ,357,Obrero de Contrucción,Construction Worker,L
+ ,358,Oficial Administrativo,Official Administrative,L
+ ,359,Oficial de Correción,Correctional Officer,M
+ ,360,Oficial de Crédito,Credit Officer,L
+ ,361,Oficial de Cobros,Collector Officer,L
+ ,362,Oficial de Cumplimiento,Compliance Officer,M
+ ,363,Oficial de Custodia,Official of Custody,L
+ ,364,Oficial de Nóminas,Payroll Officer,L
+ ,365,Oficial de Probatoria,Parolle Officer,L
+ ,366,Oficial de Rentas Internas,Internal Revenue Officer,M
+ ,367,Oficial de Tráfico,Traffic Officer,L
+ ,368,Oficial Recaudador,Collector,L
+ ,369,Oficinista,Office Clerk,L
+ ,370,Operador Camiones Blindados,Armored Truck Operator,M
+ ,371,Operador de Ascensores,Elevator Operator,L
+ ,372,Operador de Computadoras,Computer Operator,L
+ ,373,Operador de Datos,Data Entry Operator,L
+ ,374,Operador de Equipo de TV,Television Equipment Operator,L
+ ,375,Operador Equipo Eléctrico,User Equipment Electric,L
+ ,376,Operador Equipo Industrial,User Equipment Industrial,L
+ ,377,Operador Equipo Pesado,User Equipment Heavy,L
+ ,378,Operador de Fábricas,Operator,L
+ ,379,Operador de Manufactura,Manufacturer Operator,L
+ ,380,Operador de Maquinaria,Machine Operator,L
+ ,381,Operador de Radio,Radio Operator,M
+ ,382,Operador de Taximetro,Taximeter Operator,L
+ ,383,Operador de Teléfonos,Telephone Operator,L
+ ,384,Operador de Telégrafo,Telegraph Operator,L
+ ,385,Operador de Farmaceútica,Pharmaceutical Operator,L
+ ,386,Operador de la AAA,Water & Sweur Autorithy Operator,L
+ ,387,Operador de la AEE,Electric Power Autorithy Operator,L
+ ,388,Optico,Optician,M
+ ,389,Optometra,Optometrist,M
+ ,390,Orientador Escolar,School Advisor,L
+ ,391,Paralegal,Paralegal,M
+ ,392,Paramedico,Paramedic,L
+ ,393,Patologo,Pathologist,L
+ ,394,Patologo del Habla,Speech Pathologist,L
+ ,395,Pensionado Seguro Social,Social Security Pensioned,L
+ ,396,Periodist,Journalist,L
+ ,397,Pescador,Fisher Man,M
+ ,398,Piloto de Aviación,Airplane Pilot,M
+ ,399,Pintor,Painter,L
+ ,400,Plomero,Plumber,M
+ ,401,Poeta,Poet,L
+ ,402,Policia,Policemen,L
+ ,403,Porteador Público,Public Driver,M
+ ,404,Presidente Ejecutivo Cooperativa,Credit Union Executive President,M
+ ,405,Procesador de Data,Data Processor,L
+ ,406,Procesador de Préstamos,Loan Processor,L
+ ,407,Procesamiento de Datos,Data Entry,L
+ ,408,Productor de Televisión,TV Productor,M
+ ,409,Profesor Universitario,College Professor,L
+ ,410,Programador de Computadoras,Computer Programmer,L
+ ,411,Promotor de Empleos,Job Promoter,L
+ ,412,Propagandista Médico,Propagandist Medical,L
+ ,413,Psicólogo,Psychologist,M
+ ,414,Publicista,Publicist,M
+ ,415,Químico,Chemist,L
+ ,416,Radiologo,Radiologist,L
+ ,417,Recepcionista,Receptionist,L
+ ,418,Recogedor Desperdicios Sólidos,Picker of Solid Wastes,L
+ ,419,Registraduria,Register,L
+ ,420,Relacionista Público,Public Relationist,M
+ ,421,Relojero,Watchmaker,M
+ ,422,Removedor de Asbesto,Asbesto Remover Employee,L
+ ,423,Reportero,Journalist,L
+ ,424,Repostero,Confectioner,L
+ ,425,Representante de Servicios,Service Representative,M
+ ,426,Representante de Ventas,Sales Representative,M
+ ,427,Restaurante,Restaurant,M
+ ,428,Retirado Gobierno,Retired Government,L
+ ,429,Retirado Empresa Privada,Retired of Private Business,L
+ ,430,Retirado Gobierno Federal,Retired Federal Government,L
+ ,431,Reverendo,Reverend,M
+ ,432,Sacerdote,Minister,M
+ ,433,Salón de Belleza,Beauty Parlor,M
+ ,434,Salvavidas,Lifeguard,M
+ ,435,Secretaria,Secretary,L
+ ,436,Secretaria de Corte,Court Secretary,L
+ ,437,Secretaria Legal,Legal Secretary,M
+ ,438,Secretaria Médica,Medical Secretary,M
+ ,439,Servicio Doméstico,Domestic Service,L
+ ,440,Soldador,Iron Works Professional,M
+ ,441,Sonografista,Sonographist,M
+ ,442,SubGerente,Assistant Manager,M
+ ,443,Superintendente de Escuelas,School Sipernitendent,L
+ ,444,Supermercado,Supermarket,H
+ ,445,Supervisor,Supervisor,L
+ ,446,Supervisor AEE,Electric Power Autorithy Supervisor,L
+ ,447,Supervisor Comedor Escolar,Schhol Dining Room Supervisor,L
+ ,448,Supervisor de Construcción,Construction Supervisor,M
+ ,449,Supervisor de Farmaceutica,Pharmaceutical Supervisor,L
+ ,450,Supervisor Depto. Cooperativa,Credit Union Depratment Supervisor,M
+ ,451,Supervisor Depto. Salud,Health Department Supervisor,L
+ ,452,Supervisor General,General Supervisor,L
+ ,453,Tapicero,Upholster,L
+ ,454,Tasador,Appraiser,L
+ ,455,Técnico Audiovisual,Audiovisual Technician,L
+ ,456,Técnico Automotriz,Automovile Technician,H
+ ,457,Técnico de Adiestramientos,Training Technician,L
+ ,458,Técnico de Aviación,Aviation Technician,L
+ ,459,Técnico de Computadoras,Computer Technician,L
+ ,460,Técnico de Contabilidad,Accounting Technician,L
+ ,461,Técnico de Educación,Technician Educational,L
+ ,462,Técnico de Emergencias Médicas,Medical Emergencies Technician,L
+ ,463,Técnico de Impuestos,Tax Technician,M
+ ,464,Técnico de Ingenieria Industrial,Industrial Engineer Technician,L
+ ,465,Técnico de Ingenieria,Engineer Technician,L
+ ,466,Técnico de Laboratorio,Laboratory Technician,L
+ ,467,Técnico de Rayos X,X Ray Technician,M
+ ,468,Técnico de Record Médico,Medical Record Technician,M
+ ,469,Técnico de Recursos Humanos,Human Resources Technician,L
+ ,470,Técnido de Refrigeración,Cooling System Technician,L
+ ,471,Técnico de Salud Ambiental,Enviromental Health Technician,L
+ ,472,Técnico de Servicios Sociales,Social Servoces Technician,L
+ ,473,Técnico de Sonido,Sound Technician,M
+ ,474,Técnico de Uñas,Nails Technician,M
+ ,475,Técnico de Desarrollo Industrial,Indistrial Development Technician,L
+ ,476,Técnico Electrónico,Electronic Technician,M
+ ,477,Tecnólogo Dental,Dental Technologist,L
+ ,478,Tecnólogo Médico,Medical Technologist,L
+ ,479,Telemercadeo,Telemarketing Clerk,L
+ ,480,Tenedor de Libros,Bookeeper,L
+ ,481,Teniente Guardia de Seguridad,Security Guard Lieutenant,L
+ ,482,Terapista Educacional,Educational Therapist,L
+ ,483,Terapista Físico,Physical Therapist,M
+ ,484,Terapista Ocupacional,Occupational Therapist,M
+ ,485,Terapista Respiratorio,Respiratory Therapist,M
+ ,486,Tienda de Licores,Liquor Store,H
+ ,487,Tornero,Torner,L
+ ,488,Trabajador Social,Social Worker,L
+ ,489,Troquelero,Tool & Dye Maker,M
+ ,490,Vendedor,Vendor,L
+ ,491,Vendedor Agua Embotellada,Salesperson Water Bottled,M
+ ,492,Vendedor Billetes de Loteria,Lottery Ticket Vendor,M
+ ,493,Vendedor de Autos,Car Salesman,H
+ ,494,Vendedor de Hot Dogs,Hot Dogs Sales Man,M
+ ,495,Vendedor Maquinas Entretenimiento,Salesman of Entertainment Machines,M
+ ,496,Vendedor de Muebles,Furniture Salesman,M
+ ,497,Vendedor de Piraguas,Salesperson of Light Canoe,M
+ ,498,Vendedor de Piñas Coladas,Salesperson of Pineapple Juice with Ice,M
+ ,499,Vendedor de Productor Agrícolas,Agricultural Products Salesman,M
+ ,500,Vendedor de Productos de Imprenta,Printing Products Salesman,M
+ ,501,Vendedor de Productos Químicos,Chemical Products Salesman,M
+ ,502,Vendedor en Tienda de Perfumes,Perfumes Store Vendor,L
+ ,503,Vendedor Equipo Comercial,Commercial Equipment Salesman,M
+ ,504,Vendedor Equipo de Computadoras,Computers Equipment Vendor,M
+ ,505,Vendedor Equipo Médico,Medical Equipment Vendor,M
+ ,506,Vendedor Productos de Internet,Internet Products Salesman,M
+ ,507,Vendedor Tienda de Ropa,Clothes Store Salesperson,L
+ ,508,Vendedor Tienda por Departamentos,Department Store Vendor,L
+ ,509,Vendedor en Tienda de Libros,Book Store Vendor,L
+ ,510,Veterinario,Veterinarian,M
+ ,511,Vicepresidente de Finanzas,Vice Presidente of Finance,M
+ ,512,Vicepresidente de Operaciones,Vice President of Operations,M
+ ,513,Vigilante Recursos Naturales,Naturals Resources Watchman,L
+ ,514,Zapatero,Shoemaker,M
+ ,515,Agente de Loteria,Lotery Agent,M
+ ,516,Director Ejecutivo,Executive Director,M
+ ,517,Profesor Universitario,University Professor,L
+ ,518,Mesero,Waiter,L
+ ,519,Dueno de Teller Mecanica,Owner of Mechanic Store,M
+ ,520,Dueno Video Club,Owner Video Club,M
+ ,521,Asesor Financiero,Financial Advisor,M
+ ,522,Dueno Compania Servicio Mantenimiento,Owner of Service Mantenance Company,M
+ ,523,Dueno Compania Instalacion Aire Acondicionado,Air Condituner Sales Owner,M
+ ,524,Dueno Guagua Venta Mantecado,Owner of Sale Ice Cream Van,M
+ ,525,Servicio al Cliente,Customer Services,M
+ ,526,Dueno Fabrica Covers Auto,Auto Cover Fabric Owner,H
+ ,527,Dueno Pizzeria,Pizza Restaurant Owner,H
+ ,528,Acarreador,Carry Man,L
+ ,529,Empleado General,General Employee,L
+ ,530,Asistente Terapeutico,Assistant Therapeutic,L
+ ,531,Representante,Representative,H
+ ,532,Empleado de Hospital,Hospital Employee,L
+ ,533,Recaudador,Collector,M
+ ,534,Celador de Linea (AEE),Line Celator (AEE),M
+ ,535,Dependiente,Dependant,M
+ ,536,Gondolero,Gondolero,L
+ ,537,Tecnico Registro Propiedad,Property Register Technician,L
+ ,538,Analista de Sistemas,Systems Analyst,L
+ ,539,Empleado Pizzeria,Pizza Restaurant Employee,L
+ ,540,Empleado A.E.E.,A.E.E. Employee,M
+ ,542,PSIQUIATRA,PSIQUIATRA,M
+ ,543,Estudiante de Medicina,Medical Student,M
+ ,544,Tecnologo,Technologist,L
+ ,545,Cineastra,Film Director,L
+ ,546,Pediatra,Pediatra,H
+ ,547,Oficial de Operaciones,Operations Officer,
+ ,548,Audiólogo,Audiólogo,
+ ,550,Tecnico de Farmacia,Pharmacy Technician,
+ ,551,Facturacion Medica,Medical billing,
+ ,552,Comerciante Dueño de Negocio,business owner,
+ ,553,VicePresidente Mercadeo,Marketing VP,

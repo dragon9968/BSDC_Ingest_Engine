@@ -1,0 +1,122 @@
+Item#,Data Provided by CU,__UNNAMED__2,__UNNAMED__3,__UNNAMED__4,__UNNAMED__5
+,File name - must be the same as below,Sharetec Tables/Use,Comments,LIVE Timeline,Received
+1,AUTHORIZED_SIGNATURES,joint-owner,,,Yes
+2,CERTIFIED_DEPOSITS,dp,,,Yes
+3,CERTIFIED_DEPOSITS_YTD,dp,,,Yes
+4,CHECK_ACCOUNT,"dp, mb-xref",,,Yes
+5,CHECK_ACCOUNT_HOLDS,dp-hold,,,Yes
+6,CHECK_STOP_PAYMENTS,stopped-pmts,,,Yes
+7,COLLECTIONS_MANAGEMENT,"coll-agent-work, coll",,,Yes
+8,DEBIT_CARD,mb-network,,,Yes
+9,LOAN_INTEREST_YTD,ln,,,Yes
+10,LOAN_ACCOUNTS,"ln, mb-xref, mort-taxes, ln-chg-off, trns-dist",,,Yes
+11,LOANS_WITH_INSURANCE,ln,,,Yes
+12,MEMBER_ACCOUNTS,"mb, notes",,,Yes
+13,MEMBER_MESSAGE,notes,,,Yes
+14,MEMBER_PHONES,mb,,,Yes
+15,MEMBER_VEHICLE_REGISTRATION,"ln, ln-ref, notes",,,Yes
+16,PLEDGE_ACCOUNTS,dp-hold,,,Yes
+17,SAVINGS_ACCOUNTS,"dp, dp-hold, ln, trns-dist, mb-network, mb-xref",,,Yes
+18,SURCHARGE_HISTORY,ln,,,Yes
+19,TRANSFER_ACCOUNT,trns-dist,,,Yes
+20,A FIXED ASSET DETAILS TEMPLATE,fas,,,Yes
+21,ACHORIGCUSTOMER,trns-dist,,,
+22,ACHORIGTRANSACTION,trns-dist,,,
+23,C INVESTMENT TEMPLATE,iv,,,Yes
+24,D PREPAID EXPENSES TEMPLATE,ppd-exp,,,Yes
+25,GL IMPORT,gl,,,Yes
+26,OUTSTANDING CHECKS,chk-recon,,,Yes
+27,LOAN AMORTIZATION SCHEDULE,ln-amort,,,Yes
+28,MORTGAGE ENTITIES,mort-taxes,,,
+29,ESCROW RECORDS,mort-taxes,,,
+30,CERTIFICATE_ACCRUALS,dp,,,
+31,MORTGAGE_ADDRESSES,ln,,,Yes
+32,INTEREST_SAVINGS_YTD,,,,Yes
+33,,,,,
+34,,,,,
+35,,,,,
+36,,,,,
+37,,,,,
+38,,,,,
+39,,,,,
+40,,,,,
+41,,,,,
+42,,,,,
+43,,,,,
+44,,,,,
+45,,,,,
+46,,,,,
+47,,,,,
+48,,,,,
+49,,,,,
+50,,,,,
+51,,,,,
+52,,,,,
+53,,,,,
+54,,,,,
+55,,,,,
+56,,,,,
+57,,,,,
+58,,,,,
+59,,,,,
+60,,,,,
+61,,,,,
+62,,,,,
+63,,,,,
+64,,,,,
+65,,,,,
+66,,,,,
+67,,,,,
+Item#,Files to be Reused for Live,Sharetec Tables/Use,Comments,Timeline,Received
+1,,,,,
+2,,,,,
+3,,,,,
+Item#,Data Provided by Vendor (if applicable),,,,
+,File name - must be the same as below,Sharetec Tables/Use,Comments,LIVE Timeline,Received
+1,,,,,
+2,,,,,
+3,,,,,
+,Files Not in Use,,Comments,,
+1,ACCOUNT_TYPES,,,,
+2,CHECK_CLEARED,,,,
+3,COSIGNERS,,,,
+4,DEBT_COLLECTIONS,,,,
+5,DIRECT_DEPOSIT_RECEIVED,,,,
+6,HISTORY_DIRECT_DEPOSIT,,,,
+7,HISTORY_HOLDS,,,,
+8,HOLD_TYPES,,,,
+9,ID_TYPES,,,,
+10,INTEREST_CD_YTD,,,,
+11,INTEREST_SAVINGS_YTD,,,,
+12,MEMBER_DEBTS_ACCOUNTS,,,,
+13,MEMBER_PROPERTIES,,,,
+14,MESSAGE_CODES,,,,
+15,MESSAGE_TABLE,,,,
+16,PARTNERS_EXTERNAL_DEPOSIT_ACCOUNTS,,,,
+17,PROFESSION_TYPE,,,,
+18,REGISTER_RETURNED_CHECKS,,,,
+19,RELATIVES_OF_MEMBERS,,,,
+20,,,,,
+21,,,,,
+22,,,,,
+23,,,,,
+24,,,,,
+25,,,,,
+26,,,,,
+27,,,,,
+28,,,,,
+29,,,,,
+30,,,,,
+31,,,,,
+32,,,,,
+33,,,,,
+34,,,,,
+35,,,,,
+36,,,,,
+37,,,,,
+38,,,,,
+39,,,,,
+40,,,,,
+41,,,,,
+42,,,,,
+43,,,,,

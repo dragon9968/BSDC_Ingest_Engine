@@ -1,0 +1,94 @@
+AccountType,Description,SMSDescription,Loan,Deposito
+1,Acciones,30001,0,1
+1100,Ahorros,20001,0,1
+1101,Cuenta Corriente,20014,0,1
+1102,Cuenta Corriente Comercial,20015,0,1
+1103,Ahorros NS,20002,0,1
+12,Certificados De Depositos,20009,0,1
+1202,Certificados De Depositos NS,20010,0,1
+1203,Certificados De Depositos - KEOGH,20012,0,1
+1300,Certificados De Depositos - Al Instante,20011,0,1
+15,Navi Coop,20003,0,1
+1501,Navi Coop NS,20006,0,1
+16,Ahorros - Colegio,20004,0,1
+1601,Ahorros - Colegio NS,20007,0,1
+1701,Recargos por Cheques Devueltos,42007,0,1
+18,Vera Coop,20005,0,1
+1801,Vera Coop NS,20008,0,1
+1901,Recargos de Prestamos de Conversion,42019,0,1
+219,Capital Social,31004,0,1
+220,AutoPago,21416,0,1
+3600,Seguro Propiedad,21207,0,1
+3700,CRIM - Contribuciones,21208,0,1
+3710,Cuentas a Pagar Reserva Contribuciones- Hacienda,21213,0,1
+3800,Seguro MGIC,21409,0,1
+4601,Ctas. a Pagar Escrow Seguro Equipo,21209,0,1
+5500,Seguro de Vida,21411,0,1
+5700,Ctas. Reem Hipotecario,21403,0,1
+5701,Cta. Reembolsar Medi-lease,21402,0,1
+6000,Derechos Registro Auto,21404,0,1
+65,Cargo Cheques Devueltos,13601,0,1
+6501,CHEQUE DEVUELTO (ORIGINAL),13600,0,1
+75,Ingreso Opcion a Compra Equipo,42004,0,1
+78,Cuenta Corriente (Inversiones),11497,0,1
+9801,Pago Master Card,12912,1,1
+9802,Cta Reembolsar Cta Corriente,21302,0,1
+9804,Cta. Reem. Disputa M/C,21304,0,1
+9805,Cta. Reem. Seguro Auto por Accidente,21306,0,1
+8401,Pago Marbete,21107,0,0
+74,Ingresos Miscelaneos,42005,0,0
+79,Inversiones CD,11499,0,0
+93,Socio A Socio,0,0,0
+291,Pronto Hipotecario,0,0,0
+292,Aportacion Hipotecario,0,0,0
+2700,Prestamo Personal - Malpractice,12520,1,0
+2100,Prestamo para Compra de Equipo Medico,12508,1,0
+2600,Prestamo Personal - Emergencias,12519,1,0
+2500,Prestamo Personal - (Codeudor),12518,1,0
+2310,Prestamo Personal - Especial NO-Socios,12517,1,0
+2300,Prestamo Personal - Especial A Socios,12516,1,0
+2112,Prestamo Personal - Ley 14,12512,1,0
+2110,Prestamo Personal - Medi-Resuelve,12511,1,0
+8001,Venta de Giro,21103,0,0
+8201,Cheques de Viajeros,21105,0,0
+8101,Cheque de Gerente,21104,0,0
+8301,Cheque de Ocasión,21106,0,0
+2109,Prestamo Personal - Matricula,12510,1,0
+2108,Prestamo Personal - Poliza Propiedad,12509,1,0
+2107,Prestamo Personal - Sin Garantia,12506,1,0
+2900,Prestamo Personal No Socio,12522,1,0
+3100,Prestamo - IRAS,12524,1,0
+3200,Prestamo Personal Colateral,12525,1,0
+2200,Prestamo Auto,12601,1,0
+2400,Prestamo Personal - Poliza Auto,12603,1,0
+2403,Prestamo Personal - Poliza. Seg. Multiples,12604,1,0
+2406,Prestamo Personal - Otras Polizas (home owners),12605,1,0
+3500,Prestamo Hipotecario Residencial,12701,1,0
+70,Intereses Recibidos CD,40501,0,0
+51,Linea De Credito,12901,1,0
+4500,Prestamo Personal - Arrendamiento Equipo,12803,1,0
+3510,Prestamo Hipotecario - Solares,12707,1,0
+3509,Prestamo Hipotecario - Compra Venta Residencial,12706,1,0
+3506,Prestamo Hipotecario - Comercial Seg. Hipoteca,12708,1,0
+3504,Prestamo Hipotecario - Para uso Personal,12703,1,0
+3503,Prestamo Hipotecario - Residencial 85% O MAS,12702,1,0
+2106,Prestamo Personal - Contribuciones,12507,1,0
+9800,Cta a Reembolsar,21401,0,0
+9803,Cta Reembolsar Hacienda,21303,0,0
+7200,Int.Acum.Por Cobrar (Inversiones),13603,0,0
+2115,Prestamo Personal - Oferta Residentes,12513,1,0
+2206,Prestamo Auto - Usado,12602,1,0
+3507,Prestamo Hipotecario - Comercial,12705,1,0
+3505,Prestamo Hipotecario - (Seg. Hipoteca Residencial),12704,1,0
+53,Linea de Credito Malpractice,12902,1,0
+54,Linea de Credito Sist. Energia Renovable,12903,1,0
+2902,Prestamo Personal - Sist. Energia Renovable,12527,1,0
+101,Adelanto Master Card Otros,13608,0,0
+5200,Prestamo Tarjetas Mastercard,12912,1,0
+55,Linea de Credito - Comercial Participacion,12930,1,0
+3511,Prestamo Hipotecario - Comercial Participacion,12730,1,0
+900,En Transito ATM,13611,0,0
+6200,Prestamo Personal-Re-Estructurado,12514,1,0
+9999,Prestamo Incobrable,13001,1,0
+100,Adelanto Master Card Local,12912,0,0
+2800,Prestamo Personal -Enseres Electrodomesticos,12526,1,0

@@ -1,0 +1,201 @@
+import sqlite3
+from pathlib import Path
+import pandas as pd
+from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.utils import get_column_letter
+
+BASE_DIR = Path(__file__).resolve().parent
+DB_PATH = BASE_DIR / "workspace" / "rules.db"
+REPORT_DIR = BASE_DIR / "workspace" / "reports"
+
+
+def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
+    """ITEM #13: Xuất Báo cáo Kiểm duyệt (Rule Verification Report) đã được sắp xếp chuẩn theo file Mapping"""
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
+    report_file = REPORT_DIR / f"Rule_Verification_Report_{cu_id}.xlsx"
+
+    conn = sqlite3.connect(DB_PATH)
+    
+    # 💡 SẮP XẾP CHUẨN: Dùng `ORDER BY id ASC` để giữ nguyên luồng từ trên xuống của file Mapping gốc
+    query = """
+        SELECT 
+            id AS "Rule_ID",
+            cu_id AS "CU_ID",
+            sheet_name AS "Sheet_Name",
+            section_name AS "Section_Name",
+            target_field AS "Target_Field",
+            data_file AS "Source_File",
+            column_letter AS "Source_Col",
+            raw_notes AS "Raw_Notes",
+            dsl_readable AS "Draft_Rule_DSL",
+            rule_type AS "Rule_Type",
+            parsed_by AS "Parsed_By",
+            status AS "Current_Status"
+        FROM rule_store
+        WHERE cu_id = ? OR is_global = 1
+        ORDER BY id ASC
+    """
+
+    df = pd.read_sql_query(query, conn, params=(cu_id,))
+    conn.close()
+
+    if df.empty:
+        print("⚠️ Không có dữ liệu Rule nào trong DB để xuất báo cáo!")
+        return report_file
+
+    # Thêm các cột cho QA điền đánh giá
+    df["Decision (QA)"] = ""        # APPROVE / EDIT / REJECT
+    df["QA Edited DSL"] = ""        # Nhập DSL mới nếu chọn EDIT
+    df["QA Reviewer"] = ""          # Tên QA (VD: QA_An)
+    df["QA Notes"] = ""             # Ghi chú của QA
+
+    # Tự động gợi ý Decision cho các luật tin cậy cao
+    df.loc[df["Current_Status"] == "AUTO_PARSED", "Decision (QA)"] = "APPROVE"
+    df.loc[df["Current_Status"] == "NEEDS_REVIEW", "Decision (QA)"] = ""
+
+    # Re-order lại vị trí các cột cho QA dễ nhìn nhất
+    ordered_cols = [
+        "Rule_ID", "Section_Name", "Target_Field", "Source_File", "Source_Col",
+        "Raw_Notes", "Draft_Rule_DSL", "Decision (QA)", "QA Edited DSL", 
+        "QA Reviewer", "QA Notes", "Rule_Type", "Current_Status"
+    ]
+    df = df[ordered_cols]
+
+    # Xuất ra Excel và áp dụng Format đồ họa đẹp mắt
+    with pd.ExcelWriter(report_file, engine="openpyxl") as writer:
+        df.to_excel(writer, sheet_name="Rule_Verification", index=False)
+        
+        ws = writer.sheets["Rule_Verification"]
+        
+        # Định dạng Header
+        header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
+        header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+        
+        # Định dạng dòng Section Rule
+        section_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
+        section_font = Font(name="Calibri", size=10, bold=True, color="002060")
+
+        # Định dạng ô Decision (QA) màu vàng nhạt cho dễ thấy chỗ điền
+        qa_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+
+        ws.freeze_panes = "A2" # Cố định dòng tiêu đề
+
+        for col_num, col_name in enumerate(df.columns, 1):
+            cell = ws.cell(row=1, column=col_num)
+            cell.fill = header_fill
+            cell.font = header_font
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # Tô màu và căn chỉnh từng dòng
+        for row_idx, row_data in enumerate(df.itertuples(), start=2):
+            target_field = str(row_data.Target_Field)
+            is_section_rule = (target_field == "_SECTION_RULE_")
+
+            for col_idx in range(1, len(ordered_cols) + 1):
+                cell = ws.cell(row=row_idx, column=col_idx)
+                
+                # Tô màu ô Decision & QA Edited cho nổi bật
+                col_name = ordered_cols[col_idx - 1]
+                if col_name in ["Decision (QA)", "QA Edited DSL"]:
+                    cell.fill = qa_fill
+
+                # Nếu là dòng Section Rule (Ô màu đỏ/Lọc cấp bảng) -> Bôi xám viền
+                if is_section_rule:
+                    cell.fill = section_fill
+                    cell.font = section_font
+
+        # Tự động chỉnh độ rộng cột
+        for col in ws.columns:
+            max_len = max(len(str(cell.value or '')) for cell in col)
+            col_letter = get_column_letter(col[0].column)
+            ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 50)
+
+    print(f"📊 [ITEM #13] Đã tạo Báo cáo Kiểm duyệt thành công cho QA tại:")
+    print(f"   👉 {report_file.resolve()}\n")
+    return report_file
+
+
+def apply_qa_decisions(reviewed_report_path: Path):
+    """ITEM #14: Đọc file QA đã duyệt -> Cập nhật SQLite & Lưu Lịch sử Audit vào rule_history"""
+    if not reviewed_report_path.exists():
+        print(f"❌ Không tìm thấy file báo cáo đã review: {reviewed_report_path}")
+        return
+
+    df = pd.read_excel(reviewed_report_path, sheet_name="Rule_Verification")
+    conn = sqlite3.connect(DB_PATH)
+    cursor = conn.cursor()
+
+    stats = {"approved": 0, "edited": 0, "rejected": 0, "skipped": 0}
+
+    for idx, row in df.iterrows():
+        rule_id = int(row["Rule_ID"])
+        decision = str(row.get("Decision (QA)", "")).strip().upper()
+        qa_edited_dsl = str(row.get("QA Edited DSL", "")).strip()
+        reviewer = str(row.get("QA Reviewer", "")).strip() or "QA_USER"
+        qa_notes = str(row.get("QA Notes", "")).strip()
+
+        if pd.isna(decision) or not decision or decision not in ["APPROVE", "EDIT", "REJECT"]:
+            stats["skipped"] += 1
+            continue
+
+        cursor.execute("SELECT dsl_readable, cu_id, sheet_name, section_name, target_field FROM rule_store WHERE id = ?", (rule_id,))
+        curr_rule = cursor.fetchone()
+        if not curr_rule:
+            continue
+
+        prev_dsl, cu_id, sheet_name, sec_name, target_field = curr_rule
+
+        new_dsl = prev_dsl
+        new_status = "APPROVED"
+
+        if decision == "APPROVE":
+            new_status = "VERIFIED_APPROVED"
+            stats["approved"] += 1
+
+        elif decision == "EDIT":
+            new_status = "VERIFIED_EDITED"
+            new_dsl = qa_edited_dsl if qa_edited_dsl else prev_dsl
+            stats["edited"] += 1
+
+        elif decision == "REJECT":
+            new_status = "REJECTED"
+            stats["rejected"] += 1
+
+        cursor.execute("""
+            UPDATE rule_store 
+            SET dsl_readable = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        """, (new_dsl, new_status, rule_id))
+
+        cursor.execute("""
+            INSERT INTO rule_history 
+            (rule_id, cu_id, sheet_name, section_name, target_field, action, previous_dsl, new_dsl, reviewer, review_notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (rule_id, cu_id, sheet_name, sec_name, target_field, decision, prev_dsl, new_dsl, reviewer, qa_notes))
+
+    conn.commit()
+    conn.close()
+
+    print("=" * 50)
+    print("✅ [ITEM #14] ĐÃ ÁP DỤNG QUYẾT ĐỊNH CỦA QA VÀO DATABASE:")
+    print(f"   - Approved (Chấp nhận): {stats['approved']} luật")
+    print(f"   - Edited (Sửa đổi): {stats['edited']} luật")
+    print(f"   - Rejected (Từ chối): {stats['rejected']} luật")
+    print(f"   - Bỏ qua (Chưa điền Decision): {stats['skipped']} luật")
+    print("=" * 50 + "\n")
+
+
+if __name__ == "__main__":
+    import sys
+
+    if len(sys.argv) == 1:
+        report_path = export_rule_verification_report(cu_id="MEDICOOP")
+        print("💡 HƯỚNG DẪN DÙNG BƯỚC TIẾP THEO:")
+        print("1. Mở file Excel báo cáo vừa tạo ở thư mục workspace/reports/")
+        print("2. Nhập quyết định vào cột 'Decision (QA)' (APPROVE / EDIT / REJECT)")
+        print("3. Lưu file lại và chạy lệnh sau để Apply kết quả:")
+        print(f"   python qa_report_engine.py \"{report_path}\"")
+
+    else:
+        reviewed_file = Path(sys.argv[1])
+        apply_qa_decisions(reviewed_file)

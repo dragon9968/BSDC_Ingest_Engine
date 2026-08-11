@@ -1,0 +1,12 @@
+Things to do for MediCoop:
+
+1) Create GL Import Template from provided GL Template report. - Done
+2) Split out ACH Origination File into two files (ACHORIGTRANSACTION & ACHORIGCUSTOMER) - Done
+3) Split Escrow Authority Template into two files (Escrow Records & Mortgage Entities) - Done
+4) Convert CERTIFICATE_ACCRUALS report into CSV - Need new File
+5) Add Acciones Escrow Authority record. - Done
+6) Import member types and user ids for Holli - Done
+7) Redo Sign Offs 5, 27, 28 and 30 - Done
+8) Build Sign Offs 18 & 20
+9) Run EOD/EOM when completed.
+10) Copy gl.per-bal-amt[6] into gl.per-bal-amt[5 & 13]
