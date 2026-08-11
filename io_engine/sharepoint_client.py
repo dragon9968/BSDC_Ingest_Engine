@@ -13,47 +13,47 @@ class SharePointClient:
     def _get_authenticated_context(self, p):
         browser = p.chromium.launch(headless=False)
         
-        if self.session_file.exists():
-            print("🔑 Tìm thấy Session đã lưu, đang tái sử dụng...")
+        if self.session_files.exists():
+            print("🔑 Found saved Session, reusing...")
             context = browser.new_context(storage_state=str(self.session_file))
         else:
-            print("🌐 Chưa có Session! Đang mở trình duyệt để anh đăng nhập Sharetec...")
+            print("🌐 No Session found! Opening browser for SharePoint login...")
             context = browser.new_context()
             page = context.new_page()
             page.goto(settings.SITE_URL)
 
             print("\n" + "=" * 75)
-            print("👉 ANH VUI LÒNG ĐĂNG NHẬP VÀ XÁC THỰC 2 SỐ TRÊN IPHONE")
-            print("⏳ Hệ thống đang tự động chờ anh bấm xác thực (Tối đa 2 phút)...")
+            print("👉 PLEASE LOG IN AND COMPLETE 2FA AUTHENTICATION ON YOUR PHONE")
+            print("⏳ System automatically waiting for your authentication (Max 2 minutes)...")
             print("=" * 75 + "\n")
 
             try:
-                # Playwright tự ngóng trình duyệt chuyển hướng hẳn về SharePoint (không dùng input nữa)
+                # Playwright actively listens for browser redirection to SharePoint
                 page.wait_for_url(lambda url: "sharepoint.com" in url.lower() and "login" not in url.lower(), timeout=120000)
-                page.wait_for_timeout(3000)  # Chờ thêm 3s để cookie/session ghi nhận hoàn chỉnh
+                page.wait_for_timeout(3000)  # Wait 3s for full cookie/session recording
                 
                 context.storage_state(path=str(self.session_file))
-                print("✅ Đã xác thực thành công & lưu Session mới vào workspace/.auth/state.json!")
+                print("✅ Authentication successful & saved new Session to workspace/.auth/state.json!")
             except Exception as e:
                 browser.close()
-                raise TimeoutError("❌ Quá 2 phút mà chưa hoàn tất đăng nhập/xác thực 2FA trên điện thoại!")
+                raise TimeoutError("❌ Exceeded 2 minutes without completing login/2FA on phone!")
 
         return browser, context
 
     def _validate_and_save_download(self, body: bytes, local_file_path: str, file_name: str):
-        """Kiểm tra: Nếu SharePoint trả về HTML (hết hạn session) thì tự hủy session và báo lỗi"""
+        """Check: If SharePoint returns HTML (expired session), automatically destroy session and report error"""
         if b"<html" in body[:100].lower() or b"<!doctype" in body[:100].lower():
-            if self.session_file.exists():
-                self.session_file.unlink() # Tự động xóa Session hỏng
-            raise PermissionError(f"\n❌ LỖI: SESSION ĐÃ HẾT HẠN! SharePoint không nhả file [{file_name}] mà bắt đăng nhập lại.\n"
-                                  f"💡 Hệ thống đã tự động xóa Session cũ. Anh hãy CHẠY LẠI LỆNH TRÊN N8N MỘT LẦN NỮA để mở trình duyệt nhé!")
+            if self.session_files.exists():
+                self.session_files.unlink() # Auto-delete corrupted Session
+            raise PermissionError(f"\n❌ ERROR: SESSION EXPIRED! SharePoint refused to serve file [{file_name}] and forced login.\n"
+                                  f"💡 System automatically deleted old Session. PLEASE RE-RUN THE COMMAND ON n8n to open the browser again!")
         
-        # Nếu là file thật thì lưu bình thường
+        # Save normally if it's a real file
         with open(local_file_path, "wb") as f:
             f.write(body)
 
     def download_file_by_path(self, sp_file_path: str, local_dir: str) -> str:
-        """Tải 1 file cụ thể từ SharePoint bằng Playwright API Request Context gốc"""
+        """Download a specific file from SharePoint using raw Playwright API Request Context"""
         sp_file_path = sp_file_path.strip().strip('"').strip("'").replace('\\', '/').lstrip('/')
         file_name = os.path.basename(sp_file_path)
         local_file_path = str(Path(local_dir) / file_name)
@@ -67,12 +67,12 @@ class SharePointClient:
         base_site = getattr(self, 'site_url', 'https://sharetec.sharepoint.com/sites/professional_services').rstrip('/')
         api_url = f"{base_site}/_api/web/GetFileByServerRelativeUrl('{encoded_url}')/$value"
 
-        print(f"📥 Đang tải file lẻ qua Playwright API:\n   👉 Path: {server_relative_url}")
+        print(f"📥 Downloading individual file via Playwright API:\n   👉 Path: {server_relative_url}")
 
         try:
             with sync_playwright() as p:
-                # Nếu chưa có file Session (do bị xóa vì hết hạn), tự động kích hoạt tạo Session mới
-                if not self.session_file.exists():
+                # If no Session file exists (deleted due to expiration), trigger creation of new Session
+                if not self.session_files.exists():
                     browser, _ = self._get_authenticated_context(p)
                     browser.close()
 
@@ -82,12 +82,12 @@ class SharePointClient:
                 if response.status == 200:
                     os.makedirs(local_dir, exist_ok=True)
                     self._validate_and_save_download(response.body(), local_file_path, file_name)
-                    print(f"   ✅ Tải thành công file lẻ: {file_name}")
+                    print(f"   ✅ Successfully downloaded individual file: {file_name}")
                     return local_file_path
                 else:
-                    print(f"   ❌ LỖI SHAREPOINT API ({response.status}): Không tải được file.")
+                    print(f"   ❌ SHAREPOINT API ERROR ({response.status}): Failed to download files.")
         except Exception as e:
-            print(f"   💥 Lỗi tải file: {e}")
+            print(f"   💥 File download error: {e}")
 
         return None
     
@@ -103,7 +103,7 @@ class SharePointClient:
 
         api_url = f"{settings.SITE_URL}/_api/web/GetFolderByServerRelativeUrl('{encoded_folder_url}')/Files"
 
-        print(f"📂 Đang quét danh sách file trong thư mục: [{folder_relative_path}]...")
+        print(f"📂 Scanning file list in directory: [{folder_relative_path}]...")
 
         with sync_playwright() as p:
             browser, context = self._get_authenticated_context(p)
@@ -112,11 +112,11 @@ class SharePointClient:
 
             if response.status != 200:
                 browser.close()
-                raise FileNotFoundError(f"❌ Không đọc được thư mục (Status {response.status})")
+                raise FileNotFoundError(f"❌ Cannot read directory (Status {response.status})")
 
             data = response.json()
             files_list = data.get("d", {}).get("results", [])
-            print(f"🎉 Tìm thấy {len(files_list)} file trong thư mục!")
+            print(f"🎉 Found {len(files_list)} files in directory!")
 
             for file_info in files_list:
                 file_name = file_info.get("Name")
@@ -126,15 +126,15 @@ class SharePointClient:
                 encoded_file_url = urllib.parse.quote(file_server_url, safe='/')
                 download_url = f"{settings.SITE_URL}/_layouts/15/download.aspx?SourceUrl={encoded_file_url}"
 
-                print(f"⬇️ Đang tải: {file_name}...")
+                print(f"⬇️ Downloading: {file_name}...")
                 file_resp = context.request.get(download_url, timeout=0)
                 
                 if file_resp.status == 200:
                     self._validate_and_save_download(file_resp.body(), local_file_path, file_name)
                     downloaded_files.append(local_file_path)
-                    print(f"   ✅ Đã lưu file: {file_name}")
+                    print(f"   ✅ Saved file: {file_name}")
                 else:
-                    print(f"   ❌ Lỗi tải file {file_name}: Status {file_resp.status}")
+                    print(f"   ❌ Error downloading file {file_name}: Status {file_resp.status}")
 
             browser.close()
 

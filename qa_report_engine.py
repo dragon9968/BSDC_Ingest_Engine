@@ -10,13 +10,13 @@ REPORT_DIR = BASE_DIR / "workspace" / "reports"
 
 
 def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
-    """ITEM #13: Xuất Báo cáo Kiểm duyệt (Rule Verification Report) đã được sắp xếp chuẩn theo file Mapping"""
+    """ITEM #13: Export Rule Verification Report properly sorted according to Mapping file"""
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_file = REPORT_DIR / f"Rule_Verification_Report_{cu_id}.xlsx"
 
     conn = sqlite3.connect(DB_PATH)
     
-    # 💡 SẮP XẾP CHUẨN: Dùng `ORDER BY id ASC` để giữ nguyên luồng từ trên xuống của file Mapping gốc
+    # 💡 STANDARD SORTING: Use `ORDER BY id ASC` to maintain original Mapping file flow
     query = """
         SELECT 
             id AS "Rule_ID",
@@ -40,20 +40,20 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
     conn.close()
 
     if df.empty:
-        print("⚠️ Không có dữ liệu Rule nào trong DB để xuất báo cáo!")
+        print("⚠️ No Rule data in DB to export report!")
         return report_file
 
-    # Thêm các cột cho QA điền đánh giá
+    # Add columns for QA assessment
     df["Decision (QA)"] = ""        # APPROVE / EDIT / REJECT
-    df["QA Edited DSL"] = ""        # Nhập DSL mới nếu chọn EDIT
-    df["QA Reviewer"] = ""          # Tên QA (VD: QA_An)
-    df["QA Notes"] = ""             # Ghi chú của QA
+    df["QA Edited DSL"] = ""        # Input new DSL if EDIT is selected
+    df["QA Reviewer"] = ""          # QA Reviewer Name (e.g., QA_John)
+    df["QA Notes"] = ""             # QA Notes/Comments
 
-    # Tự động gợi ý Decision cho các luật tin cậy cao
+    # Auto-suggest Decision for high-confidence rules
     df.loc[df["Current_Status"] == "AUTO_PARSED", "Decision (QA)"] = "APPROVE"
     df.loc[df["Current_Status"] == "NEEDS_REVIEW", "Decision (QA)"] = ""
 
-    # Re-order lại vị trí các cột cho QA dễ nhìn nhất
+    # Re-order columns for best QA visibility
     ordered_cols = [
         "Rule_ID", "Section_Name", "Target_Field", "Source_File", "Source_Col",
         "Raw_Notes", "Draft_Rule_DSL", "Decision (QA)", "QA Edited DSL", 
@@ -61,24 +61,24 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
     ]
     df = df[ordered_cols]
 
-    # Xuất ra Excel và áp dụng Format đồ họa đẹp mắt
+    # Export to Excel and apply visual formatting
     with pd.ExcelWriter(report_file, engine="openpyxl") as writer:
         df.to_excel(writer, sheet_name="Rule_Verification", index=False)
         
         ws = writer.sheets["Rule_Verification"]
         
-        # Định dạng Header
+        # Header formatting
         header_fill = PatternFill(start_color="1F4E78", end_color="1F4E78", fill_type="solid")
         header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
         
-        # Định dạng dòng Section Rule
+        # Section Rule row formatting
         section_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")
         section_font = Font(name="Calibri", size=10, bold=True, color="002060")
 
-        # Định dạng ô Decision (QA) màu vàng nhạt cho dễ thấy chỗ điền
+        # Format QA Decision cells with light yellow background
         qa_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
 
-        ws.freeze_panes = "A2" # Cố định dòng tiêu đề
+        ws.freeze_panes = "A2" # Freeze header row
 
         for col_num, col_name in enumerate(df.columns, 1):
             cell = ws.cell(row=1, column=col_num)
@@ -86,7 +86,7 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
             cell.font = header_font
             cell.alignment = Alignment(horizontal="center", vertical="center")
 
-        # Tô màu và căn chỉnh từng dòng
+        # Coloring and aligning each row
         for row_idx, row_data in enumerate(df.itertuples(), start=2):
             target_field = str(row_data.Target_Field)
             is_section_rule = (target_field == "_SECTION_RULE_")
@@ -94,31 +94,31 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
             for col_idx in range(1, len(ordered_cols) + 1):
                 cell = ws.cell(row=row_idx, column=col_idx)
                 
-                # Tô màu ô Decision & QA Edited cho nổi bật
+                # Highlight Decision & QA Edited cells
                 col_name = ordered_cols[col_idx - 1]
                 if col_name in ["Decision (QA)", "QA Edited DSL"]:
                     cell.fill = qa_fill
 
-                # Nếu là dòng Section Rule (Ô màu đỏ/Lọc cấp bảng) -> Bôi xám viền
+                # If Section Rule row (Red cell/Table filter) -> Apply gray border
                 if is_section_rule:
                     cell.fill = section_fill
                     cell.font = section_font
 
-        # Tự động chỉnh độ rộng cột
+        # Auto-adjust column width
         for col in ws.columns:
             max_len = max(len(str(cell.value or '')) for cell in col)
             col_letter = get_column_letter(col[0].column)
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 50)
 
-    print(f"📊 [ITEM #13] Đã tạo Báo cáo Kiểm duyệt thành công cho QA tại:")
-    print(f"   👉 {report_file.resolve()}\n")
+    print(f"📊 [ITEM #13] Successfully generated Verification Report for QA at:")
+    print(f"   👉 {report_files.resolve()}\n")
     return report_file
 
 
 def apply_qa_decisions(reviewed_report_path: Path):
-    """ITEM #14: Đọc file QA đã duyệt -> Cập nhật SQLite & Lưu Lịch sử Audit vào rule_history"""
+    """ITEM #14: Read QA reviewed file -> Update SQLite & Save Audit History to rule_history"""
     if not reviewed_report_path.exists():
-        print(f"❌ Không tìm thấy file báo cáo đã review: {reviewed_report_path}")
+        print(f"❌ Reviewed report file not found: {reviewed_report_path}")
         return
 
     df = pd.read_excel(reviewed_report_path, sheet_name="Rule_Verification")
@@ -177,11 +177,11 @@ def apply_qa_decisions(reviewed_report_path: Path):
     conn.close()
 
     print("=" * 50)
-    print("✅ [ITEM #14] ĐÃ ÁP DỤNG QUYẾT ĐỊNH CỦA QA VÀO DATABASE:")
-    print(f"   - Approved (Chấp nhận): {stats['approved']} luật")
-    print(f"   - Edited (Sửa đổi): {stats['edited']} luật")
-    print(f"   - Rejected (Từ chối): {stats['rejected']} luật")
-    print(f"   - Bỏ qua (Chưa điền Decision): {stats['skipped']} luật")
+    print("✅ [ITEM #14] APPLIED QA DECISIONS TO DATABASE:")
+    print(f"   - Approved: {stats['approved']} rules")
+    print(f"   - Edited: {stats['edited']} rules")
+    print(f"   - Rejected: {stats['rejected']} rules")
+    print(f"   - Skipped (No Decision input): {stats['skipped']} rules")
     print("=" * 50 + "\n")
 
 
@@ -190,10 +190,10 @@ if __name__ == "__main__":
 
     if len(sys.argv) == 1:
         report_path = export_rule_verification_report(cu_id="MEDICOOP")
-        print("💡 HƯỚNG DẪN DÙNG BƯỚC TIẾP THEO:")
-        print("1. Mở file Excel báo cáo vừa tạo ở thư mục workspace/reports/")
-        print("2. Nhập quyết định vào cột 'Decision (QA)' (APPROVE / EDIT / REJECT)")
-        print("3. Lưu file lại và chạy lệnh sau để Apply kết quả:")
+        print("💡 INSTRUCTIONS FOR NEXT STEPS:")
+        print("1. Open the generated Excel report in workspace/reports/")
+        print("2. Enter decision in 'Decision (QA)' column (APPROVE / EDIT / REJECT)")
+        print("3. Save the file and run the following command to Apply results:")
         print(f"   python qa_report_engine.py \"{report_path}\"")
 
     else:

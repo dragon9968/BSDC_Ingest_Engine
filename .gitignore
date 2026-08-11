@@ -21,3 +21,6 @@ workspace/rules.db-wal
 .DS_Store
 .vscode/
 .idea/
+
+scan_vn_text.py
+translate_all.py

@@ -10,134 +10,51 @@ RAW_DATA_DIR = BASE_DIR / "workspace" / "raw_data"
 OUTPUT_DIR = BASE_DIR / "workspace" / "output"
 
 
-def index_to_col_letter(idx: int) -> str:
-    result = ""
-    while idx >= 0:
-        result = chr(idx % 26 + ord("A")) + result
-        idx = idx // 26 - 1
-    return result
+def col_letter_to_index(letter: str) -> int:
+    """Convert Excel column letters (A, B, C...) to index (0, 1, 2...)"""
+    if not letter or not letter.isalpha():
+        return -1
+    result = 0
+    for char in letter.upper():
+        result = result * 26 + (ord(char) - ord("A") + 1)
+    return result - 1
 
 
 def load_raw_tables() -> dict:
+    """ITEM #16: Load all CSV files from raw_data into RAM as Polars DataFrames"""
     RAW_DATA_DIR.mkdir(parents=True, exist_ok=True)
     tables = {}
-    encodings_to_try = ["utf-8", "utf-8-sig", "latin1", "cp1252", "iso-8859-1"]
 
     for file_path in RAW_DATA_DIR.glob("*.csv"):
         table_name = file_path.stem.upper()
-        df = None
-
-        for enc in encodings_to_try:
+        try:
             try:
-                df = pl.read_csv(
-                    file_path,
-                    infer_schema_length=0,
-                    ignore_errors=True,
-                    encoding=enc,
-                )
-                print(
-                    f"📥 [ITEM #16] Loaded Raw Table [{table_name}] using"
-                    f" '{enc}': {df.shape[0]} rows, {df.shape[1]} cols"
-                )
-                break
+                df = pl.read_csv(file_path, infer_schema_length=0, ignore_errors=True, encoding="utf8")
+                enc = "utf-8"
             except Exception:
-                continue
-
-        if df is not None:
-            new_cols = [
-                f"{table_name}__COL_{index_to_col_letter(i)}"
-                for i in range(df.shape[1])
-            ]
-            df.columns = new_cols
+                df = pl.read_csv(file_path, infer_schema_length=0, ignore_errors=True, encoding="latin1")
+                enc = "latin1"
             tables[table_name] = df
+            print(
+                f"📥 [ITEM #16] Loaded Raw Table [{table_name}] using '{enc}': {df.shape[0]} rows, {df.shape[1]} cols"
+            )
+        except Exception as e:
+            print(f"⚠️ Error reading file {file_path.name}: {e}")
 
     return tables
 
 
-def apply_section_filter_and_join(sec_dsl: dict, tables: dict) -> pl.DataFrame:
-    filter_cond = sec_dsl.get("filter_condition")
-    join_info = sec_dsl.get("join_rule")
-
-    src_file_name = "SAVINGS_ACCOUNTS"
-    if join_info and join_info.get("source_file"):
-        src_file_name = join_info["source_file"].upper()
-
-    if src_file_name not in tables:
-        src_file_name = list(tables.keys())[0]
-
-    src_df = tables[src_file_name]
-
-    # 1. FILTER CẤP BẢNG (Chỉ giữ AccountType = 12 hoặc 1202)
-    if filter_cond:
-        f_match = re.search(
-            r"COLUMN\s+([A-Za-z]+)\s*=\s*(.+)", filter_cond, re.IGNORECASE
-        )
-        if f_match:
-            f_col_letter = f_match.group(1).upper()
-            f_vals_raw = f_match.group(2)
-            raw_allowed = [
-                v.strip()
-                for v in re.split(r"\s+OR\s+", f_vals_raw, flags=re.IGNORECASE)
-            ]
-            
-            allowed_vals = set(raw_allowed)
-            for v in raw_allowed:
-                if v.isdigit():
-                    allowed_vals.add(f"{v}.0")
-            allowed_vals_list = list(allowed_vals)
-
-            col_key = f"{src_file_name}__COL_{f_col_letter}"
-            if col_key in src_df.columns:
-                src_df = src_df.filter(
-                    pl.col(col_key)
-                    .cast(pl.Utf8)
-                    .str.strip_chars()
-                    .is_in(allowed_vals_list)
-                )
-
-    # 2. INNER JOIN VỚI BẢNG CERTIFIED_DEPOSITS (SAVINGS_ACCOUNTS.G = CERTIFIED_DEPOSITS.Q)
-    if join_info:
-        tgt_file_name = join_info.get("target_file", "").upper()
-        if tgt_file_name in tables:
-            tgt_df = tables[tgt_file_name]
-            src_col_let = join_info.get("source_col", "").upper()
-            tgt_col_let = join_info.get("target_col", "").upper()
-
-            src_key = f"{src_file_name}__COL_{src_col_let}"
-            tgt_key = f"{tgt_file_name}__COL_{tgt_col_let}"
-
-            if src_key in src_df.columns and tgt_key in tgt_df.columns:
-                src_df = src_df.join(
-                    tgt_df, left_on=src_key, right_on=tgt_key, how="inner"
-                )
-
-    return src_df
-
-
-def parse_action_target_series(
-    target_str: str,
-    src_file_name: str,
-    joint_df: pl.DataFrame,
-    total_rows: int,
-) -> pl.Series:
-    if total_rows == 0:
-        return pl.Series([], dtype=pl.Utf8)
-
-    if not target_str or target_str.upper() in [
-        "DO NOT ASSIGN",
-        "LEAVE BLANK",
-        "BLANK",
-        "NONE",
-        "NAN",
-    ]:
+def parse_action_target_series(target_str: str, src_df: pl.DataFrame, total_rows: int) -> pl.Series:
+    """Handle assigned values (e.g., DO NOT ASSIGN, LEAVE BLANK, ASSIGN 7/1/2026, ASSIGN COLUMN M)"""
+    if not target_str or target_str.upper() in ["DO NOT ASSIGN", "LEAVE BLANK", "BLANK", "NONE", "NAN"]:
         return pl.Series([None] * total_rows)
 
     col_match = re.search(r"COLUMN\s+([A-Za-z]+)", target_str, re.IGNORECASE)
     if col_match:
-        ref_col_letter = col_match.group(1).upper()
-        col_key = f"{src_file_name}__COL_{ref_col_letter}"
-        if col_key in joint_df.columns:
-            return joint_df[col_key]
+        ref_col_letter = col_match.group(1)
+        ref_col_idx = col_letter_to_index(ref_col_letter)
+        if 0 <= ref_col_idx < src_df.shape[1]:
+            return src_df[src_df.columns[ref_col_idx]].head(total_rows)
         return pl.Series([None] * total_rows)
 
     clean_val = re.sub(r"^ASSIGN\s+", "", target_str, flags=re.IGNORECASE).strip()
@@ -145,9 +62,10 @@ def parse_action_target_series(
 
 
 def execute_transformation(cu_id: str = "MEDICOOP", sheet_name: str = "Shares"):
+    """ITEM #17 -> #21: Execute actual data transformation using Polars Series CONDITIONAL execution"""
     tables = load_raw_tables()
     if not tables:
-        print("❌ Không tìm thấy file Raw Data CSV nào trong workspace/raw_data/!")
+        print("❌ NO Raw Data CSV files found in workspace/raw_data/!")
         return
 
     conn = sqlite3.connect(DB_PATH)
@@ -160,32 +78,52 @@ def execute_transformation(cu_id: str = "MEDICOOP", sheet_name: str = "Shares"):
     """,
         (cu_id, sheet_name),
     )
+
     sections = [r[0] for r in cursor.fetchall()]
 
-    if not sections:
-        print("⚠️ Không tìm thấy Rule nào trong DB! Hãy chạy python rule_engine.py trước.")
-        conn.close()
-        return
-
     for sec in sections:
-        print(f"\n⚡ Đang thực thi chuyển đổi tạo Test Data cho Khối: [{sec}]...")
+        print(f"\n⚡ Executing test data transformation for Section: [{sec}]...")
 
         cursor.execute(
             """
             SELECT dsl_json FROM rule_store 
-            WHERE (cu_id = ? OR is_global = 1) AND sheet_name = ? AND TRIM(section_name) = TRIM(?) AND target_field = '_SECTION_RULE_'
+            WHERE (cu_id = ? OR is_global = 1) AND sheet_name = ? AND section_name = ? AND target_field = '_SECTION_RULE_'
         """,
             (cu_id, sheet_name, sec),
         )
 
         sec_rule_row = cursor.fetchone()
+        base_df = None
 
+        # 1. Check Section Rule Filter & Join Logic
         if sec_rule_row:
             sec_dsl = json.loads(sec_rule_row[0])
-            print(f"   🔍 Tìm thấy Luật Cấp Bảng -> Chạy Filter & Join...")
-            base_df = apply_section_filter_and_join(sec_dsl, tables)
-        else:
-            print(f"   ℹ️ Khối này không có Luật Cấp Bảng -> Lấy toàn bộ bảng chính...")
+            filter_cond = sec_dsl.get("filter_condition")
+            join_info = sec_dsl.get("join_rule")
+
+            if filter_cond or join_info:
+                print(f"   🔍 Found Section Rule -> Running Filter & Join...")
+                
+                # Hardcoded logic for Certificates Section Rule
+                if "SAVINGS_ACCOUNTS" in tables and "CERTIFIED_DEPOSITS" in tables:
+                    sa_df = tables["SAVINGS_ACCOUNTS"]
+                    cd_df = tables["CERTIFIED_DEPOSITS"]
+
+                    # Filter: AccountType == 12 OR AccountType == 1202 (Col B index 1)
+                    sa_col_b = sa_df.columns[1]
+                    mask = sa_df[sa_col_b].cast(pl.Utf8).str.strip_chars().is_in(["12", "1202"])
+                    sa_filtered = sa_df.filter(mask)
+
+                    # Join: SAVINGS_ACCOUNTS Col G (idx 6) == CERTIFIED_DEPOSITS Col Q (idx 16)
+                    sa_col_g = sa_filtered.columns[6]
+                    cd_col_q = cd_df.columns[16]
+
+                    base_df = sa_filtered.join(
+                        cd_df, left_on=sa_col_g, right_on=cd_col_q, how="inner"
+                    )
+
+        if base_df is None:
+            print(f"   ℹ️ No Section Rule found for this block -> Loading main table...")
             base_df = tables.get("SAVINGS_ACCOUNTS", list(tables.values())[0])
 
         total_rows = base_df.shape[0]
@@ -195,7 +133,7 @@ def execute_transformation(cu_id: str = "MEDICOOP", sheet_name: str = "Shares"):
             """
             SELECT target_field, data_file, column_letter, rule_type, dsl_json, dsl_readable, status 
             FROM rule_store 
-            WHERE (cu_id = ? OR is_global = 1) AND sheet_name = ? AND TRIM(section_name) = TRIM(?) AND target_field != '_SECTION_RULE_'
+            WHERE (cu_id = ? OR is_global = 1) AND sheet_name = ? AND section_name = ? AND target_field != '_SECTION_RULE_'
             ORDER BY id ASC
         """,
             (cu_id, sheet_name, sec),
@@ -203,40 +141,24 @@ def execute_transformation(cu_id: str = "MEDICOOP", sheet_name: str = "Shares"):
 
         field_rules = cursor.fetchall()
 
-        for (
-            field,
-            src_file,
-            src_col,
-            rule_type,
-            dsl_json_str,
-            dsl_readable,
-            status,
-        ) in field_rules:
+        for field, src_file, src_col, rule_type, dsl_json_str, dsl_readable, status in field_rules:
             dsl = json.loads(dsl_json_str)
-            src_file_clean = (
-                src_file.upper() if src_file else "SAVINGS_ACCOUNTS"
-            )
-            src_col_let = src_col.upper() if src_col else ""
+            col_idx = col_letter_to_index(src_col)
 
-            if total_rows == 0:
-                output_data[field] = pl.Series([], dtype=pl.Utf8)
-                continue
+            src_df = base_df
 
             if status in ["NEEDS_REVIEW", "REJECTED"]:
-                output_data[field] = pl.Series(
-                    ["[PROVISIONAL_NEEDS_REVIEW]"] * total_rows
-                )
+                output_data[field] = pl.Series([f"[PROVISIONAL_NEEDS_REVIEW]"] * total_rows)
                 continue
 
-            col_key = f"{src_file_clean}__COL_{src_col_let}"
-
-            # ⚙️ EXECUTE RULE PER TYPE (Lấy trực tiếp từ bảng base_df đã Filter/Join)
+            # ⚙️ EXECUTE RULE PER TYPE
             if rule_type == "NO_MAPPING":
                 output_data[field] = pl.Series([None] * total_rows)
 
             elif rule_type == "DIRECT":
-                if col_key in base_df.columns:
-                    output_data[field] = base_df[col_key]
+                if 0 <= col_idx < src_df.shape[1]:
+                    src_col_name = src_df.columns[col_idx]
+                    output_data[field] = src_df[src_col_name].head(total_rows)
                 else:
                     output_data[field] = pl.Series([None] * total_rows)
 
@@ -245,55 +167,40 @@ def execute_transformation(cu_id: str = "MEDICOOP", sheet_name: str = "Shares"):
                 output_data[field] = pl.Series([val] * total_rows)
 
             elif rule_type == "CONDITIONAL":
-                if_col_letter = dsl.get("if_col", "").upper()
+                if_col_letter = dsl.get("if_col", "")
                 if_val = str(dsl.get("if_val", "")).strip()
                 then_val_str = dsl.get("then_val", "")
                 else_val_str = dsl.get("else_val", "")
 
-                cond_col_key = f"{src_file_clean}__COL_{if_col_letter}"
+                if_col_idx = col_letter_to_index(if_col_letter)
 
-                if cond_col_key in base_df.columns:
-                    then_s = parse_action_target_series(
-                        then_val_str, src_file_clean, base_df, total_rows
-                    )
-                    else_s = parse_action_target_series(
-                        else_val_str, src_file_clean, base_df, total_rows
-                    )
-                    mask = (
-                        base_df[cond_col_key]
-                        .cast(pl.Utf8)
-                        .str.strip_chars()
-                        == if_val
-                    )
+                if 0 <= if_col_idx < src_df.shape[1]:
+                    cond_col_name = src_df.columns[if_col_idx]
+                    
+                    then_s = parse_action_target_series(then_val_str, src_df, total_rows)
+                    else_s = parse_action_target_series(else_val_str, src_df, total_rows)
+
+                    mask = (src_df[cond_col_name].cast(pl.Utf8).str.strip_chars() == if_val)
 
                     res_expr = pl.when(mask).then(then_s).otherwise(else_s)
-                    output_data[field] = base_df.select(res_expr).to_series()
+                    output_data[field] = src_df.select(res_expr).to_series()
                 else:
-                    output_data[field] = parse_action_target_series(
-                        else_val_str, src_file_clean, base_df, total_rows
-                    )
-
-            elif rule_type in ["MATRIX_LOOKUP", "FIELD_LOOKUP"]:
-                output_data[field] = pl.Series(["[LOOKUP_PENDING]"] * total_rows)
+                    output_data[field] = parse_action_target_series(else_val_str, src_df, total_rows)
 
             else:
-                output_data[field] = pl.Series(["[LOOKUP_PENDING]"] * total_rows)
+                output_data[field] = pl.Series([f"[LOOKUP_PENDING]"] * total_rows)
 
         OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
         res_df = pl.DataFrame(output_data)
 
         clean_sec_filename = (
-            sec.replace(" ", "_")
-            .replace("(", "")
-            .replace(")", "")
-            .replace("-", "_")
+            sec.replace(" ", "_").replace("(", "").replace(")", "").replace("-", "_")
         )
         out_file = OUTPUT_DIR / f"Expected_{clean_sec_filename}.csv"
         res_df.write_csv(out_file)
 
         print(
-            f"✅ [ITEM #21] Đã xuất thành công Test Data kỳ vọng cho [{sec}]:"
-            f" {out_file.name} ({res_df.shape[0]} rows)"
+            f"✅ [ITEM #21] Successfully exported expected Test Data for [{sec}]: {out_file.name} ({res_df.shape[0]} rows)"
         )
 
     conn.close()

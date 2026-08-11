@@ -9,7 +9,7 @@ DB_PATH = BASE_DIR / "workspace" / "rules.db"
 
 
 def parse_section_rule(raw_notes: str) -> dict:
-    """HÀM BẮT Ô MÀU ĐỎ/GHI CHÚ KHỐI (SECTION-LEVEL RULE)"""
+    """PARSE RED CELL / SECTION-LEVEL NOTES (SECTION-LEVEL RULE)"""
     filter_cond = None
     join_rule = None
 
@@ -58,8 +58,8 @@ def parse_section_rule(raw_notes: str) -> dict:
 
 
 def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
-    """HÀM ITEM #8: Deterministic Parser phân loại chính xác Rule"""
-    data_file = data_file.strip() if data_file else ""
+    """ITEM #8: Deterministic Parser for accurate Rule classification"""
+    data_file = data_files.strip() if data_file else ""
     col = col.strip() if col else ""
     notes = notes.strip() if notes else ""
     notes_upper = notes.upper()
@@ -148,7 +148,7 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
 def process_mapping_sheet(
     excel_path: str, sheet_name: str, cu_id: str = "MEDICOOP"
 ):
-    print(f"🔄 Đang đọc file Mapping Sheet [{sheet_name}] cho CU: [{cu_id}]...")
+    print(f"🔄 Reading Mapping Sheet [{sheet_name}] for CU: [{cu_id}]...")
 
     raw_df = pd.read_excel(excel_path, sheet_name=sheet_name, header=None)
 
@@ -165,10 +165,10 @@ def process_mapping_sheet(
     }
     current_section = "Shares (DP Table) - General"
 
-    field_col_idx = 1       # Cột B
-    data_file_col_idx = 5   # Cột F
-    col_letter_idx = 6      # Cột G
-    notes_col_idx = 7       # Cột H
+    field_col_idx = 1       # Column B
+    data_file_col_idx = 5   # Column F
+    col_letter_idx = 6      # Column G
+    notes_col_idx = 7       # Column H
 
     for idx, row in raw_df.iterrows():
         row_vals_clean = [str(v).strip() for v in row.values if pd.notna(v)]
@@ -187,14 +187,14 @@ def process_mapping_sheet(
                 elif "notes" in val_str or "additional" in val_str:
                     notes_col_idx = c_idx
 
-        # 1. Cập nhật tên Khối Section
+        # 1. Update Section Block name
         if "table)" in row_str.lower() or "(mb-" in row_str.lower() or "(dp" in row_str.lower():
             clean_sec_name = row_str.split("ONLY CONSIDERED")[0].split("LINK")[0].split("|")[0].strip()
             if clean_sec_name and len(clean_sec_name) < 100:
                 current_section = clean_sec_name
-                print(f"\n📌 Đang quét Khối dữ liệu: [{current_section}]")
+                print(f"\n📌 Scanning Data Section: [{current_section}]")
 
-        # 2. CHỈ LƯU _SECTION_RULE_ KHI CÓ FILTER HOẶC JOIN THỰC THỰ
+        # 2. SAVE _SECTION_RULE_ ONLY WHEN FILTER OR JOIN EXISTS
         if "ONLY CONSIDERED" in row_str.upper() or "LINK " in row_str.upper():
             parsed_sec = parse_section_rule(row_str)
             if parsed_sec["dsl_json"]["filter_condition"] or parsed_sec["dsl_json"]["join_rule"]:
@@ -220,7 +220,7 @@ def process_mapping_sheet(
                     ),
                 )
                 stats["section_rules"] += 1
-                print(f"   🚩 [SECTION_RULE] Khóa bộ lọc cho [{current_section}] -> {parsed_sec['dsl_readable']}")
+                print(f"   🚩 [SECTION_RULE] Locking filter for [{current_section}] -> {parsed_sec['dsl_readable']}")
                 continue
 
         target_field = str(row.iloc[field_col_idx]).strip() if len(row) > field_col_idx and pd.notna(row.iloc[field_col_idx]) else ""
@@ -245,7 +245,7 @@ def process_mapping_sheet(
                     raw_notes = cell_val
                     break
 
-        if data_file.lower() in ["nan", "none"]: data_file = ""
+        if data_files.lower() in ["nan", "none"]: data_file = ""
         if col.lower() in ["nan", "none"]: col = ""
         if raw_notes.lower() in ["nan", "none"]: raw_notes = ""
 
@@ -261,7 +261,7 @@ def process_mapping_sheet(
 
         if existing_rule:
             stats["reused"] += 1
-            print(f"   [#7 REUSED] {target_field} -> Dùng lại Rule: {existing_rule[0]}")
+            print(f"   [#7 REUSED] {target_field} -> Reusing Rule: {existing_rule[0]}")
         else:
             parsed_res = parse_notes_to_dsl(data_file, col, raw_notes)
 
@@ -289,34 +289,34 @@ def process_mapping_sheet(
 
             if parsed_res["rule_type"] == "NO_MAPPING":
                 stats["no_mapping"] += 1
-                print(f"   [#8 NO_MAPPING] {target_field} -> Bỏ qua (Trống cả 3 cột)")
+                print(f"   [#8 NO_MAPPING] {target_field} -> Skipped (All 3 columns empty)")
             elif parsed_res["status"] == "AUTO_PARSED":
                 stats["auto_parsed"] += 1
                 print(f"   [#8 PARSED] {target_field} -> {parsed_res['dsl_readable']}")
             else:
                 stats["needs_review"] += 1
-                print(f"   [#8 UNPARSED] {target_field} -> Cần AI review (Notes dài/phức tạp)")
+                print(f"   [#8 UNPARSED] {target_field} -> Needs AI review (Long/Complex Notes)")
 
     conn.commit()
     conn.close()
 
     print("\n" + "=" * 50)
-    print(f"📊 TỔNG KẾT NẠP RULE SHEET [{sheet_name}]:")
-    print(f"   - Tái sử dụng (#7): {stats['reused']} trường")
-    print(f"   - Rule Cấp Bảng (#8): {stats['section_rules']} luật (Filter/Join)")
-    print(f"   - Tự động Parse (#8): {stats['auto_parsed']} trường")
-    print(f"   - Không map/Trống (#8): {stats['no_mapping']} trường")
-    print(f"   - Cần LLM xử lý (#9): {stats['needs_review']} trường")
+    print(f"📊 RULE INGESTION SUMMARY FOR SHEET [{sheet_name}]:")
+    print(f"   - Reused (#7): {stats['reused']} fields")
+    print(f"   - Section Rules (#8): {stats['section_rules']} rules (Filter/Join)")
+    print(f"   - Auto-Parsed (#8): {stats['auto_parsed']} fields")
+    print(f"   - No Mapping/Empty (#8): {stats['no_mapping']} fields")
+    print(f"   - Needs LLM Review (#9): {stats['needs_review']} fields")
     print("=" * 50 + "\n")
 
 
 def find_mapping_file(ingest_dir: Path) -> Path:
     for file in ingest_dir.glob("*.xlsx"):
-        if file.name.startswith("~$"): continue
-        if "mapping" in file.name.lower():
-            print(f"🎯 Đã tự động tìm thấy file mapping: {file.name}")
+        if files.name.startswith("~$"): continue
+        if "mapping" in files.name.lower():
+            print(f"🎯 Automatically found mapping file: {files.name}")
             return file
-    raise FileNotFoundError("❌ Không tìm thấy file mapping trong workspace/ingest/")
+    raise FileNotFoundError("❌ NO mapping file found in workspace/ingest/")
 
 
 if __name__ == "__main__":
@@ -325,4 +325,4 @@ if __name__ == "__main__":
         excel_file_path = find_mapping_file(INGEST_DIR)
         process_mapping_sheet(str(excel_file_path), sheet_name="Shares", cu_id="MEDICOOP")
     except Exception as e:
-        print(f"💥 Lỗi: {e}")
+        print(f"💥 Error: {e}")

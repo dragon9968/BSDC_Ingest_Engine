@@ -1,0 +1,155 @@
+{
+  "name": "SharePoint_Fetch_File",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7ac45954-cf29-4214-b666-c56f964aaa06",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "4057f9f3-da3f-4b53-a23b-a7c0516c1bb1",
+              "name": "mapping_path",
+              "value": "Shared Documents/1. Conversion & Mergers Projects/26 07 MediCoop Conversion/07 Team Folders/QA Team Folder",
+              "type": "string"
+            },
+            {
+              "id": "6520602c-6aba-457f-b7a9-57e62508bc0b",
+              "name": "raw_data_path",
+              "value": "Shared Documents/1. Conversion & Mergers Projects/26 07 MediCoop Conversion/02 Data & Reports - Training/1st Data Cut 3-31-26/CSV Files",
+              "type": "string"
+            },
+            {
+              "id": "babf3175-e979-49f8-9d99-ddec96233ceb",
+              "name": "matrix_path",
+              "value": "Shared Documents/1. Conversion & Mergers Projects/26 07 MediCoop Conversion/03 Info From CU/03 Matrix",
+              "type": "string"
+            },
+            {
+              "id": "41c09d2d-8856-461d-8211-5dd907c25357",
+              "name": "project_dir",
+              "value": "D:/BSDC/BSDC_Ingest_Engine",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        220,
+        0
+      ],
+      "id": "e652517b-003c-41b5-91ed-06b814163f6e",
+      "name": "Set Sharepoint path"
+    },
+    {
+      "parameters": {
+        "command": "={{ $json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $json.project_dir }}/main_ingest.py --path \"{{ $json.raw_data_path }}\" \"{{ $json.matrix_path }}\" \"{{ $json.mapping_path }}\""
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        420,
+        0
+      ],
+      "id": "3d5e5d11-8171-46e9-be68-37c4ff623a65",
+      "name": "Fetch Input Files (Raw data, mapping, matrix)"
+    },
+    {
+      "parameters": {
+        "executeOnce": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py",
+        "command": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        640,
+        0
+      ],
+      "id": "c988dfbb-28a9-45f6-816f-8f3f156ecb3c",
+      "name": "Convert to CSV (If they are Excel file)"
+    },
+    {
+      "parameters": {
+        "command": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_validate_mapping.py"
+      },
+      "type": "n8n-nodes-base.executeCommand",
+      "typeVersion": 1,
+      "position": [
+        860,
+        0
+      ],
+      "id": "af7a12ff-3926-40b6-938a-1794a7293e2a",
+      "name": "Validate the mapping file",
+      "onError": "continueRegularOutput"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Set Sharepoint path",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Sharepoint path": {
+      "main": [
+        [
+          {
+            "node": "Fetch Input Files (Raw data, mapping, matrix)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Fetch Input Files (Raw data, mapping, matrix)": {
+      "main": [
+        [
+          {
+            "node": "Convert to CSV (If they are Excel file)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to CSV (If they are Excel file)": {
+      "main": [
+        [
+          {
+            "node": "Validate the mapping file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "7e66c3ee-2854-422b-a212-626860ff6e40",
+  "meta": {
+    "instanceId": "7e4ab5b15df44e4fdbde799614bf980ec37978041426198882a1d59e9c97067d"
+  },
+  "id": "apl1pnaRLWUzpB3D",
+  "tags": []
+}

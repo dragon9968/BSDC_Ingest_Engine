@@ -9,26 +9,26 @@ sys.stdout.reconfigure(encoding='utf-8')
 
 def run_preflight_check(specified_file: str = None):
     print("=" * 60)
-    print("🛡️ KÍCH HOẠT MAPPING PREFLIGHT VALIDATOR (ACTION #6)")
+    print("🛡️ TRIGGERING MAPPING PREFLIGHT VALIDATOR (ACTION #6)")
     print("=" * 60)
 
     ingest_dir = Path(settings.LOCAL_INGEST_DIR)
 
-    # Lấy danh sách file Mapping cần quét
+    # Get list of Mapping files to scan
     if specified_file:
         target_files = [Path(specified_file)]
     else:
         target_files = [f for f in ingest_dir.glob("*.xlsx") if "mapping" in f.name.lower()]
 
     if not target_files:
-        print(f"❌ Không tìm thấy file Excel Mapping nào trong thư mục ingest: {ingest_dir}")
+        print(f"❌ No Excel Mapping file found in ingest directory: {ingest_dir}")
         sys.exit(1)
 
-    print(f"📂 Phát hiện {len(target_files)} file Mapping cần kiểm tra trong thư mục ingest.")
+    print(f"📂 Detected {len(target_files)} Mapping files to validate in ingest directory.")
     print("-" * 60)
 
     all_files_valid = True
-    report_data = [] # Lưu trữ thông tin toàn bộ file (cả Hợp lệ lẫn Lỗi)
+    report_data = [] # Store info of all files (both Valid and Erroneous)
     total_global_errors = 0
 
     for file_path in target_files:
@@ -41,9 +41,9 @@ def run_preflight_check(specified_file: str = None):
 
             if not is_valid:
                 all_files_valid = False
-                print(f"  ❌ [{file_path.name}] ➔ Có {file_errors_count} lỗi trên {len(errors_by_sheet)} Sheet!")
+                print(f"  ❌ [{file_path.name}] ➔ Contains {file_errors_count} errors across {len(errors_by_sheet)} Sheets!")
             else:
-                print(f"  ✅ [{file_path.name}] ➔ HỢP LỆ 100%")
+                print(f"  ✅ [{file_path.name}] ➔ 100% VALID")
 
             report_data.append({
                 "file_name": file_path.name,
@@ -54,17 +54,17 @@ def run_preflight_check(specified_file: str = None):
 
         except Exception as e:
             all_files_valid = False
-            print(f"  ❌ [{file_path.name}] ➔ Lỗi đọc file: {e}")
+            print(f"  ❌ [{file_path.name}] ➔ Error reading file: {e}")
             report_data.append({
                 "file_name": file_path.name,
                 "is_valid": False,
                 "errors_count": 1,
-                "errors_by_sheet": {"System": [f"❌ Lỗi hệ thống khi đọc file: {e}"]}
+                "errors_by_sheet": {"System": [f"❌ System error reading file: {e}"]}
             })
 
     print("-" * 60)
 
-    # Ghi file Báo cáo tổng hợp cho QA
+    # Write aggregate Preflight Report for QA
     report_dir = settings.BASE_DIR / "workspace" / "qa_reports"
     report_dir.mkdir(parents=True, exist_ok=True)
     
@@ -73,52 +73,52 @@ def run_preflight_check(specified_file: str = None):
 
     with open(report_file, "w", encoding="utf-8") as f:
         f.write("=" * 80 + "\n")
-        f.write(f" BÁO CÁO TỔNG HỢP KIỂM TRA FILE MAPPING (PREFLIGHT REPORT)\n")
-        f.write(f" Thời gian quét: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f" Số file đã kiểm tra: {len(target_files)} file\n")
-        f.write(f" Tổng số lỗi phát hiện: {total_global_errors} lỗi\n")
+        f.write(f" MAPPING FILE VALIDATION REPORT (PREFLIGHT REPORT)\n")
+        f.write(f" Scan Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f" Total files scanned: {len(target_files)} file\n")
+        f.write(f" Total errors detected: {total_global_errors} errors\n")
         f.write("=" * 80 + "\n\n")
 
-        # 1. BẢNG TỔNG QUAN TẤT CẢ FILE
-        f.write("📊 TỔNG QUAN TRẠNG THÁI CÁC FILE:\n")
+        # 1. OVERALL SUMMARY OF ALL FILES
+        f.write("📊 OVERALL STATUS OF FILES:\n")
         f.write("-" * 80 + "\n")
         for item in report_data:
-            status_str = "✅ HỢP LỆ 100%" if item["is_valid"] else f"❌ CÓ LỖI ({item['errors_count']} lỗi)"
+            status_str = "✅ 100% VALID" if item["is_valid"] else f"❌ HAS ERRORS ({item['errors_count']} errors)"
             f.write(f"  • [{item['file_name']}] ➔ {status_str}\n")
         f.write("=" * 80 + "\n\n")
 
-        # 2. CHI TIẾT TỪNG FILE
-        f.write("🔍 CHI TIẾT TỪNG FILE MAPPING:\n\n")
+        # 2. DETAILS BY FILE
+        f.write("🔍 DETAILS BY FILE MAPPING:\n\n")
         for item in report_data:
             f.write(f"📄 FILE MAPPING: [{item['file_name']}]\n")
             f.write("-" * 80 + "\n")
             
             if item["is_valid"]:
-                f.write("  ✅ File hoàn toàn hợp lệ! Không phát hiện lỗi cấu trúc nào.\n\n")
+                f.write("  ✅ File is perfectly valid! No structural errors detected.\n\n")
             else:
                 for sheet_name, err_list in item["errors_by_sheet"].items():
-                    f.write(f"  📑 Sheet: [{sheet_name}] ({len(err_list)} lỗi)\n")
+                    f.write(f"  📑 Sheet: [{sheet_name}] ({len(err_list)} errors)\n")
                     f.write("  " + "-" * 76 + "\n")
                     for err in err_list:
                         f.write(f"    ❌ {err}\n")
                     f.write("\n")
             f.write("\n")
 
-    # Đưa ra kết luận và trả về Exit Status Code cho n8n
+    # Provide conclusion and return Exit Status Code for n8n
     if all_files_valid:
-        print("✅ PREFLIGHT SUCCESS: Tất cả file Mapping đều hợp lệ! Sẵn sàng cho Ingest Engine.")
-        print(f"👉 Báo cáo tổng hợp lưu tại: {report_file}")
+        print("✅ PREFLIGHT SUCCESS: All Mapping files are valid! Ready for Ingest Engine.")
+        print(f"👉 Aggregate report saved at: {report_file}")
         print("=" * 60)
         sys.exit(0)
     else:
-        print(f"❌ PREFLIGHT FAILED: Phát hiện tổng cộng {total_global_errors} lỗi trên các file Mapping.")
-        print(f"👉 Chi tiết báo cáo tổng hợp đã được xuất ra file:\n   {report_file}")
+        print(f"❌ PREFLIGHT FAILED: Detected a total of {total_global_errors} errors across Mapping files.")
+        print(f"👉 Detailed aggregate report has been exported to file:\n   {report_file}")
         print("=" * 60)
         sys.exit(1)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preflight Validate Mapping Files")
-    parser.add_argument("--file", required=False, help="Đường dẫn file mapping cụ thể (nếu muốn check lẻ)")
+    parser.add_argument("--file", required=False, help="Specific mapping file path (if checking individually)")
     args = parser.parse_args()
 
     run_preflight_check(args.file)

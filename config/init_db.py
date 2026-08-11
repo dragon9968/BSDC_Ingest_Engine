@@ -15,9 +15,9 @@ def init_database(reset=False):
         cursor.execute("DROP TABLE IF EXISTS rule_history;")
         cursor.execute("DROP TABLE IF EXISTS rule_store;")
         cursor.execute("DROP TABLE IF EXISTS cu_registry;")
-        print("🧹 Đã dọn dẹp sạch dữ liệu cũ trong Database!")
+        print("🧹 Cleaned up old data in Database!")
 
-    # 1. Bảng lưu Rule chính
+    # 1. Main Rule storage table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rule_store (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -40,7 +40,7 @@ def init_database(reset=False):
     );
     """)
 
-    # 2. Bảng lưu Lịch sử Audit duyệt bài của QA (Item #14)
+    # 2. Audit History table for QA reviews (Item #14)
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS rule_history (
         history_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -58,7 +58,7 @@ def init_database(reset=False):
     );
     """)
 
-    # 3. Bảng Registry CU
+    # 3. CU Registry table
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS cu_registry (
         cu_id TEXT PRIMARY KEY,
@@ -69,7 +69,7 @@ def init_database(reset=False):
 
     conn.commit()
     conn.close()
-    print(f"✅ Đã khởi tạo thành công Database SQLite tại: {DB_PATH.resolve()}")
+    print(f"✅ Successfully initialized SQLite Database at: {DB_PATH.resolve()}")
 
 
 if __name__ == "__main__":
