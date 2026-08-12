@@ -71,7 +71,7 @@ class SharePointClient:
             api_endpoint = f"{self.site_url}/_api/web/getfilebyserverrelativeurl('{encoded_url}')/$value"
 
             headers = {"Accept": "application/json;odata=verbose"}
-            response = request_context.get(api_endpoint, headers=headers)
+            response = request_context.get(api_endpoint, headers=headers, timeout=300000)
 
             if response.status == 200:
                 file_bytes = response.body()
@@ -133,7 +133,7 @@ class SharePointClient:
                 file_val_url = f"{self.site_url}/_api/web/getfilebyserverrelativeurl('{f_encoded}')/$value"
 
                 print(f"⬇️ Downloading: {f_name}...")
-                file_resp = request_context.get(file_val_url)
+                file_resp = request_context.get(file_val_url, timeout=300000)
 
                 if file_resp.status == 200:
                     f_bytes = file_resp.body()

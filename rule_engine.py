@@ -59,7 +59,7 @@ def parse_section_rule(raw_notes: str) -> dict:
 
 def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
     """ITEM #8: Deterministic Parser for accurate Rule classification"""
-    data_file = data_files.strip() if data_file else ""
+    data_file = data_file.strip() if data_file else ""
     col = col.strip() if col else ""
     notes = notes.strip() if notes else ""
     notes_upper = notes.upper()
@@ -245,7 +245,7 @@ def process_mapping_sheet(
                     raw_notes = cell_val
                     break
 
-        if data_files.lower() in ["nan", "none"]: data_file = ""
+        if data_file.lower() in ["nan", "none"]: data_file = ""
         if col.lower() in ["nan", "none"]: col = ""
         if raw_notes.lower() in ["nan", "none"]: raw_notes = ""
 
@@ -312,9 +312,9 @@ def process_mapping_sheet(
 
 def find_mapping_file(ingest_dir: Path) -> Path:
     for file in ingest_dir.glob("*.xlsx"):
-        if files.name.startswith("~$"): continue
-        if "mapping" in files.name.lower():
-            print(f"🎯 Automatically found mapping file: {files.name}")
+        if file.name.startswith("~$"): continue
+        if "mapping" in file.name.lower():
+            print(f"🎯 Automatically found mapping file: {file.name}")
             return file
     raise FileNotFoundError("❌ NO mapping file found in workspace/ingest/")
 

@@ -27,3 +27,8 @@ translate_all.py
 
 !workspace/*/.gitkeep
 !workspace/.auth/.gitkeep
+
+# Docker Image Export
+*.tar
+*.tar.gz
+*.taz

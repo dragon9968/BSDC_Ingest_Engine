@@ -1,5 +1,5 @@
 {
-  "name": "SharePoint_Fetch_File",
+  "name": "BSDC_Workflow",
   "nodes": [
     {
       "parameters": {},
@@ -37,7 +37,7 @@
             {
               "id": "41c09d2d-8856-461d-8211-5dd907c25357",
               "name": "project_dir",
-              "value": "D:/BSDC/BSDC_Ingest_Engine",
+              "value": "/home/node/app",
               "type": "string"
             }
           ]
@@ -47,7 +47,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        220,
+        224,
         0
       ],
       "id": "e652517b-003c-41b5-91ed-06b814163f6e",
@@ -55,12 +55,12 @@
     },
     {
       "parameters": {
-        "command": "={{ $json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $json.project_dir }}/main_ingest.py --path \"{{ $json.raw_data_path }}\" \"{{ $json.matrix_path }}\" \"{{ $json.mapping_path }}\""
+        "command": "=python3 -X utf8 main_ingest.py --path \"{{ $json.raw_data_path }}\" \"{{ $json.matrix_path }}\" \"{{ $json.mapping_path }}\""
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        420,
+        432,
         0
       ],
       "id": "3d5e5d11-8171-46e9-be68-37c4ff623a65",
@@ -68,8 +68,8 @@
     },
     {
       "parameters": {
-        "executeOnce": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py",
-        "command": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py"
+        "executeOnce": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py",
+        "command": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
@@ -82,12 +82,12 @@
     },
     {
       "parameters": {
-        "command": "={{ $('Set Sharepoint path').item.json.project_dir }}/venv/Scripts/python.exe -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_validate_mapping.py"
+        "command": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_validate_mapping.py"
       },
       "type": "n8n-nodes-base.executeCommand",
       "typeVersion": 1,
       "position": [
-        860,
+        864,
         0
       ],
       "id": "af7a12ff-3926-40b6-938a-1794a7293e2a",
@@ -146,9 +146,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "7e66c3ee-2854-422b-a212-626860ff6e40",
+  "versionId": "3924b5e0-596b-48ae-acb4-c456ce47945e",
   "meta": {
-    "instanceId": "7e4ab5b15df44e4fdbde799614bf980ec37978041426198882a1d59e9c97067d"
+    "instanceId": "025baaf22ff71570ea3c4ec53ce34429beeb152badb1475442002e208bcb209e"
   },
   "id": "apl1pnaRLWUzpB3D",
   "tags": []
