@@ -1,5 +1,5 @@
 {
-  "name": "BSDC_Workflow",
+  "name": "BSDC_Workflows",
   "nodes": [
     {
       "parameters": {},
@@ -37,7 +37,7 @@
             {
               "id": "41c09d2d-8856-461d-8211-5dd907c25357",
               "name": "project_dir",
-              "value": "/home/node/app",
+              "value": "D:/BSDC/BSDC_Ingest_Engine",
               "type": "string"
             }
           ]
@@ -47,7 +47,7 @@
       "type": "n8n-nodes-base.set",
       "typeVersion": 3.4,
       "position": [
-        224,
+        220,
         0
       ],
       "id": "e652517b-003c-41b5-91ed-06b814163f6e",
@@ -55,44 +55,75 @@
     },
     {
       "parameters": {
-        "command": "=python3 -X utf8 main_ingest.py --path \"{{ $json.raw_data_path }}\" \"{{ $json.matrix_path }}\" \"{{ $json.mapping_path }}\""
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/fetch-input-files",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "cu_id",
+              "value": "MEDICOOP"
+            },
+            {
+              "name": "mapping_path",
+              "value": "={{ $json.mapping_path }}"
+            },
+            {
+              "name": "raw_data_path",
+              "value": "={{ $json.raw_data_path }}"
+            },
+            {
+              "name": "matrix_path",
+              "value": "={{ $json.matrix_path }}"
+            }
+          ]
+        },
+        "options": {}
       },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        432,
+        440,
         0
       ],
-      "id": "3d5e5d11-8171-46e9-be68-37c4ff623a65",
-      "name": "Fetch Input Files (Raw data, mapping, matrix)"
+      "id": "2721873a-86b5-4c38-9c84-36f2a37cad7f",
+      "name": "Fetch Input Files"
     },
     {
       "parameters": {
-        "executeOnce": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py",
-        "command": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_convert.py"
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/convert-to-csv",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"cu_id\": \"MEDICOOP\"\n}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        640,
+        660,
         0
       ],
-      "id": "c988dfbb-28a9-45f6-816f-8f3f156ecb3c",
-      "name": "Convert to CSV (If they are Excel file)"
+      "id": "96d5f41b-0813-4e4c-85c2-c0613be23bae",
+      "name": "Convert to CSV"
     },
     {
       "parameters": {
-        "command": "=python3 -X utf8 {{ $('Set Sharepoint path').item.json.project_dir }}/main_validate_mapping.py"
+        "method": "POST",
+        "url": "http://127.0.0.1:8000/api/v1/validate-mapping",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"cu_id\": \"MEDICOOP\"\n}",
+        "options": {}
       },
-      "type": "n8n-nodes-base.executeCommand",
-      "typeVersion": 1,
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        864,
+        880,
         0
       ],
-      "id": "af7a12ff-3926-40b6-938a-1794a7293e2a",
-      "name": "Validate the mapping file",
-      "onError": "continueRegularOutput"
+      "id": "7636a26c-4367-446d-bc28-2bc0061147f4",
+      "name": "Validate the mapping file"
     }
   ],
   "pinData": {},
@@ -112,25 +143,25 @@
       "main": [
         [
           {
-            "node": "Fetch Input Files (Raw data, mapping, matrix)",
+            "node": "Fetch Input Files",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Fetch Input Files (Raw data, mapping, matrix)": {
+    "Fetch Input Files": {
       "main": [
         [
           {
-            "node": "Convert to CSV (If they are Excel file)",
+            "node": "Convert to CSV",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Convert to CSV (If they are Excel file)": {
+    "Convert to CSV": {
       "main": [
         [
           {
@@ -146,9 +177,9 @@
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "3924b5e0-596b-48ae-acb4-c456ce47945e",
+  "versionId": "7f1149c1-3122-4a89-95cb-060bb794fdd2",
   "meta": {
-    "instanceId": "025baaf22ff71570ea3c4ec53ce34429beeb152badb1475442002e208bcb209e"
+    "instanceId": "7e4ab5b15df44e4fdbde799614bf980ec37978041426198882a1d59e9c97067d"
   },
   "id": "apl1pnaRLWUzpB3D",
   "tags": []

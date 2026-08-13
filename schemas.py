@@ -1,6 +1,5 @@
 from typing import Optional, Union, Literal, Dict, Any
-from pydantic import BaseModel, Field, TypeAdapter
-
+from pydantic import BaseModel, TypeAdapter
 
 class JoinRuleModel(BaseModel):
     """Data model for Join operations between two tables"""
