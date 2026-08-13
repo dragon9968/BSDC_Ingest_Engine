@@ -7,3 +7,5 @@ fastexcel
 python-calamine
 pandas
 pydantic
+fastapi
+uvicorn

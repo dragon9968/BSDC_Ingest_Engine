@@ -1,10 +1,13 @@
 @echo off
 title Launching BSDC Ingest Engine...
 echo ==================================================
-echo  Starting FastAPI Engine & Opening n8n Workflow...
+echo  Starting FastAPI Engine ^& Opening n8n Workflow...
 echo ==================================================
 
-:: Active Virtual Environment and run FastAPI in background
+:: Auto-navigate to the script's actual directory
+cd /d "%~dp0"
+
+:: Activate Virtual Environment and run FastAPI in background
 call venv\Scripts\activate
 start /B python main.py
 
@@ -14,4 +17,3 @@ start http://localhost:5678
 
 echo.
 echo Engine is running smoothly in background!
-echo You can close this window now.
