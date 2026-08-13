@@ -4,14 +4,25 @@ import sqlite3
 from pathlib import Path
 import pandas as pd
 
+from schemas import (
+    SectionRuleDSL,
+    JoinRuleModel,
+    ConditionalRuleDSL,
+    DirectRuleDSL,
+    ConstantRuleDSL,
+    MatrixLookupRuleDSL,
+    NoMappingRuleDSL,
+    UnparsedRuleDSL,
+)
+
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "workspace" / "rules.db"
 
 
 def parse_section_rule(raw_notes: str) -> dict:
-    """PARSE RED CELL / SECTION-LEVEL NOTES (SECTION-LEVEL RULE)"""
+    """Parse section-level filter conditions and table joins using Pydantic v2"""
     filter_cond = None
-    join_rule = None
+    join_rule_model = None
 
     filter_match = re.search(
         r"(?:ONLY\s+CONSIDERED\s+.*?\s+IF|IF)\s+(COLUMN\s+[A-Za-z0-9_]+\s*=\s*[^\|\n]+)",
@@ -27,47 +38,50 @@ def parse_section_rule(raw_notes: str) -> dict:
         re.IGNORECASE,
     )
     if link_match:
-        join_rule = {
-            "source_file": link_match.group(1),
-            "source_col": link_match.group(2),
-            "target_file": link_match.group(3),
-            "target_col": link_match.group(4),
-        }
+        join_rule_model = JoinRuleModel(
+            source_file=link_match.group(1),
+            source_col=link_match.group(2),
+            target_file=link_match.group(3),
+            target_col=link_match.group(4),
+        )
+
+    # Instantiate Pydantic Section Rule Model
+    sec_dsl = SectionRuleDSL(
+        filter_condition=filter_cond,
+        join_rule=join_rule_model,
+        raw_notes=raw_notes,
+    )
 
     readable_parts = []
     if filter_cond:
         readable_parts.append(f"FILTER({filter_cond})")
-    if join_rule:
+    if join_rule_model:
         readable_parts.append(
-            f"JOIN({join_rule['source_file']}.{join_rule['source_col']} = {join_rule['target_file']}.{join_rule['target_col']})"
+            f"JOIN({join_rule_model.source_file}.{join_rule_model.source_col} = {join_rule_model.target_file}.{join_rule_model.target_col})"
         )
 
     readable_str = " | ".join(readable_parts)
 
     return {
         "rule_type": "SECTION_RULE",
-        "dsl_json": {
-            "action": "SECTION_RULE",
-            "filter_condition": filter_cond,
-            "join_rule": join_rule,
-            "raw_notes": raw_notes,
-        },
+        "dsl_obj": sec_dsl,
         "dsl_readable": readable_str if readable_str else "SECTION_HEADER_RULE",
         "status": "AUTO_PARSED",
     }
 
 
 def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
-    """ITEM #8: Deterministic Parser for accurate Rule classification"""
+    """Parse field mapping notes into typed Pydantic v2 models"""
     data_file = data_file.strip() if data_file else ""
     col = col.strip() if col else ""
     notes = notes.strip() if notes else ""
     notes_upper = notes.upper()
 
     if not data_file and not col and not notes:
+        no_map = NoMappingRuleDSL()
         return {
             "rule_type": "NO_MAPPING",
-            "dsl_json": {"action": "NONE", "reason": "UNMAPPED_FIELD"},
+            "dsl_obj": no_map,
             "dsl_readable": "NO_MAPPING",
             "status": "AUTO_PARSED",
         }
@@ -80,22 +94,17 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
         )
 
         if cond_match:
-            if_col = cond_match.group(1).strip()
-            if_val = cond_match.group(2).strip()
-            then_val = cond_match.group(3).strip()
-            else_val = cond_match.group(4).strip()
-
+            cond_dsl = ConditionalRuleDSL(
+                if_col=cond_match.group(1).strip(),
+                if_val=cond_match.group(2).strip(),
+                then_val=cond_match.group(3).strip(),
+                else_val=cond_match.group(4).strip(),
+                raw_condition=notes,
+            )
             return {
                 "rule_type": "CONDITIONAL",
-                "dsl_json": {
-                    "action": "CONDITIONAL",
-                    "if_col": if_col,
-                    "if_val": if_val,
-                    "then_val": then_val,
-                    "else_val": else_val,
-                    "raw_condition": notes,
-                },
-                "dsl_readable": f"IF COL_{if_col}=='{if_val}' THEN '{then_val}' ELSE '{else_val}'",
+                "dsl_obj": cond_dsl,
+                "dsl_readable": f"IF COL_{cond_dsl.if_col}=='{cond_dsl.if_val}' THEN '{cond_dsl.then_val}' ELSE '{cond_dsl.else_val}'",
                 "status": "AUTO_PARSED",
             }
 
@@ -103,43 +112,45 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
         match = re.search(r"ASSIGN\s+([A-Za-z0-9_\-\.]+)", notes, re.IGNORECASE)
         ref = match.group(1) if match else "MATRIX_LOOKUP"
 
+        matrix_dsl = MatrixLookupRuleDSL(
+            target_ref=ref,
+            source_file=data_file,
+            source_column=col,
+            raw_notes=notes,
+        )
         return {
             "rule_type": "MATRIX_LOOKUP",
-            "dsl_json": {
-                "action": "MATRIX_LOOKUP",
-                "target_ref": ref,
-                "source_file": data_file,
-                "source_column": col,
-                "raw_notes": notes,
-            },
+            "dsl_obj": matrix_dsl,
             "dsl_readable": f"LOOKUP('{ref}')",
             "status": "AUTO_PARSED",
         }
 
     if data_file and col and (not notes or notes_upper in ["NAN", "NONE"]):
+        direct_dsl = DirectRuleDSL(
+            source_file=data_file,
+            source_column=col,
+        )
         return {
             "rule_type": "DIRECT",
-            "dsl_json": {
-                "action": "DIRECT",
-                "source_file": data_file,
-                "source_column": col,
-            },
+            "dsl_obj": direct_dsl,
             "dsl_readable": f"{data_file}.{col}",
             "status": "AUTO_PARSED",
         }
 
     if notes_upper.startswith("ASSIGN"):
         val = re.sub(r"^ASSIGN\s+(ALL\s+)?", "", notes, flags=re.IGNORECASE).strip()
+        const_dsl = ConstantRuleDSL(value=val)
         return {
             "rule_type": "CONSTANT",
-            "dsl_json": {"action": "CONSTANT", "value": val},
+            "dsl_obj": const_dsl,
             "dsl_readable": f"CONST('{val}')",
             "status": "AUTO_PARSED",
         }
 
+    unparsed_dsl = UnparsedRuleDSL(raw_notes=notes)
     return {
         "rule_type": "UNPARSED",
-        "dsl_json": {"action": "UNPARSED", "raw_notes": notes},
+        "dsl_obj": unparsed_dsl,
         "dsl_readable": "NEEDS_LLM_PARSING",
         "status": "NEEDS_REVIEW",
     }
@@ -148,7 +159,8 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
 def process_mapping_sheet(
     excel_path: str, sheet_name: str, cu_id: str = "MEDICOOP"
 ):
-    print(f"🔄 Reading Mapping Sheet [{sheet_name}] for CU: [{cu_id}]...")
+    """Process a single excel mapping sheet and persist Pydantic validated rules to SQLite"""
+    print(f"\n🔄 Reading Mapping Sheet [{sheet_name}] for CU: [{cu_id}]...")
 
     raw_df = pd.read_excel(excel_path, sheet_name=sheet_name, header=None)
 
@@ -163,7 +175,7 @@ def process_mapping_sheet(
         "needs_review": 0,
         "section_rules": 0,
     }
-    current_section = "Shares (DP Table) - General"
+    current_section = f"{sheet_name} - General"
 
     field_col_idx = 1       # Column B
     data_file_col_idx = 5   # Column F
@@ -187,17 +199,19 @@ def process_mapping_sheet(
                 elif "notes" in val_str or "additional" in val_str:
                     notes_col_idx = c_idx
 
-        # 1. Update Section Block name
-        if "table)" in row_str.lower() or "(mb-" in row_str.lower() or "(dp" in row_str.lower():
+        # Detect Data Section Headers
+        if any(kw in row_str.lower() for kw in ["table)", "(mb-", "(dp", "table", "section"]):
             clean_sec_name = row_str.split("ONLY CONSIDERED")[0].split("LINK")[0].split("|")[0].strip()
             if clean_sec_name and len(clean_sec_name) < 100:
                 current_section = clean_sec_name
-                print(f"\n📌 Scanning Data Section: [{current_section}]")
+                print(f"📌 Scanning Data Section: [{current_section}]")
 
-        # 2. SAVE _SECTION_RULE_ ONLY WHEN FILTER OR JOIN EXISTS
+        # Save _SECTION_RULE_ if Filter or Join is present
         if "ONLY CONSIDERED" in row_str.upper() or "LINK " in row_str.upper():
             parsed_sec = parse_section_rule(row_str)
-            if parsed_sec["dsl_json"]["filter_condition"] or parsed_sec["dsl_json"]["join_rule"]:
+            sec_dsl_obj: SectionRuleDSL = parsed_sec["dsl_obj"]
+
+            if sec_dsl_obj.filter_condition or sec_dsl_obj.join_rule:
                 cursor.execute(
                     """
                     INSERT OR REPLACE INTO rule_store 
@@ -213,7 +227,7 @@ def process_mapping_sheet(
                         "",
                         "",
                         parsed_sec["rule_type"],
-                        json.dumps(parsed_sec["dsl_json"]),
+                        sec_dsl_obj.model_dump_json(),
                         parsed_sec["dsl_readable"],
                         parsed_sec["status"],
                         "ITEM_8",
@@ -261,9 +275,9 @@ def process_mapping_sheet(
 
         if existing_rule:
             stats["reused"] += 1
-            print(f"   [#7 REUSED] {target_field} -> Reusing Rule: {existing_rule[0]}")
         else:
             parsed_res = parse_notes_to_dsl(data_file, col, raw_notes)
+            rule_dsl_obj = parsed_res["dsl_obj"]
 
             cursor.execute(
                 """
@@ -280,7 +294,7 @@ def process_mapping_sheet(
                     data_file,
                     col,
                     parsed_res["rule_type"],
-                    json.dumps(parsed_res["dsl_json"]),
+                    rule_dsl_obj.model_dump_json(),
                     parsed_res["dsl_readable"],
                     parsed_res["status"],
                     "ITEM_8",
@@ -289,25 +303,32 @@ def process_mapping_sheet(
 
             if parsed_res["rule_type"] == "NO_MAPPING":
                 stats["no_mapping"] += 1
-                print(f"   [#8 NO_MAPPING] {target_field} -> Skipped (All 3 columns empty)")
             elif parsed_res["status"] == "AUTO_PARSED":
                 stats["auto_parsed"] += 1
-                print(f"   [#8 PARSED] {target_field} -> {parsed_res['dsl_readable']}")
             else:
                 stats["needs_review"] += 1
-                print(f"   [#8 UNPARSED] {target_field} -> Needs AI review (Long/Complex Notes)")
 
     conn.commit()
     conn.close()
 
-    print("\n" + "=" * 50)
-    print(f"📊 RULE INGESTION SUMMARY FOR SHEET [{sheet_name}]:")
-    print(f"   - Reused (#7): {stats['reused']} fields")
-    print(f"   - Section Rules (#8): {stats['section_rules']} rules (Filter/Join)")
-    print(f"   - Auto-Parsed (#8): {stats['auto_parsed']} fields")
-    print(f"   - No Mapping/Empty (#8): {stats['no_mapping']} fields")
-    print(f"   - Needs LLM Review (#9): {stats['needs_review']} fields")
-    print("=" * 50 + "\n")
+    print("=" * 50)
+    print(f"📊 SUMMARY FOR SHEET [{sheet_name}]: Auto-Parsed: {stats['auto_parsed']} | Section Rules: {stats['section_rules']} | Needs Review: {stats['needs_review']}")
+    print("=" * 50)
+
+
+def process_all_mapping_sheets(excel_path: str, cu_id: str = "MEDICOOP"):
+    """Automatically process all mapping sheets in the workbook"""
+    xl = pd.ExcelFile(excel_path)
+    ignore_sheets = ["cover", "index", "readme", "instruction", "instructions", "summary"]
+    
+    valid_sheets = [s for s in xl.sheet_names if s.strip().lower() not in ignore_sheets]
+    print(f"🚀 Found {len(valid_sheets)} valid mapping sheets: {valid_sheets}")
+
+    for sheet in valid_sheets:
+        try:
+            process_mapping_sheet(excel_path, sheet_name=sheet, cu_id=cu_id)
+        except Exception as e:
+            print(f"❌ Error processing sheet [{sheet}]: {e}")
 
 
 def find_mapping_file(ingest_dir: Path) -> Path:
@@ -323,6 +344,6 @@ if __name__ == "__main__":
     INGEST_DIR = BASE_DIR / "workspace" / "ingest"
     try:
         excel_file_path = find_mapping_file(INGEST_DIR)
-        process_mapping_sheet(str(excel_file_path), sheet_name="Shares", cu_id="MEDICOOP")
+        process_all_mapping_sheets(str(excel_file_path), cu_id="MEDICOOP")
     except Exception as e:
         print(f"💥 Error: {e}")

@@ -111,7 +111,7 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 50)
 
     print(f"📊 [ITEM #13] Successfully generated Verification Report for QA at:")
-    print(f"   👉 {report_files.resolve()}\n")
+    print(f"   👉 {report_file.resolve()}\n")
     return report_file
 
 

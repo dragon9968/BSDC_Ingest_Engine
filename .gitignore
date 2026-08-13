@@ -7,12 +7,16 @@ __pycache__/
 # File cấu hình chứa mật khẩu / API Key
 .env
 
-# Thư mục dữ liệu tạm / Output
-workspace/output/
-workspace/raw_data/*.csv
-workspace/ingest/*.xlsx
-workspace/.auth/
-# SQLite DB (ự tạo bằng init_db.py)
+# Thư mục dữ liệu tạm / Output / CSV / Ingest
+workspace/output/*
+workspace/raw_data/*
+workspace/ingest/*
+workspace/csv/*
+workspace/reports/*
+workspace/qa_reports/*
+workspace/.auth/*
+
+# SQLite DB (tự tạo bằng init_db.py)
 workspace/rules.db
 workspace/rules.db-journal
 workspace/rules.db-wal
@@ -25,8 +29,8 @@ workspace/rules.db-wal
 scan_vn_text.py
 translate_all.py
 
-!workspace/*/.gitkeep
-!workspace/.auth/.gitkeep
+# Giữ lại file cấu trúc .gitkeep
+!workspace/**/.gitkeep
 
 # Docker Image Export
 *.tar

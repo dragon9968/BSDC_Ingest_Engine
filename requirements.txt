@@ -6,4 +6,4 @@ openpyxl
 fastexcel
 python-calamine
 pandas
-openpyxl
+pydantic
