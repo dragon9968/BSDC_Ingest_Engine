@@ -4,14 +4,18 @@ echo ==================================================
 echo  Starting FastAPI Engine ^& Opening n8n Workflow...
 echo ==================================================
 
-:: Auto-navigate to the script's actual directory
 cd /d "%~dp0"
 
-:: Activate Virtual Environment and run FastAPI in background
+:: Active venv
 call venv\Scripts\activate
+
+:: Ensure dependencies and Playwright browser are installed
+pip install -r requirements.txt
+playwright install chromium
+
+:: Run FastAPI in background
 start /B python main.py
 
-:: Wait 3 seconds for server readiness, then open browser
 timeout /t 3 /nobreak >nul
 start http://localhost:5678
 
