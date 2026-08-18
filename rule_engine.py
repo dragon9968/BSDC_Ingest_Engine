@@ -1,6 +1,7 @@
 import json
 import re
 import sqlite3
+import sys
 from pathlib import Path
 import pandas as pd
 
@@ -20,7 +21,7 @@ DB_PATH = BASE_DIR / "workspace" / "rules.db"
 
 
 def parse_section_rule(raw_notes: str) -> dict:
-    """Parse section-level filter conditions and table joins using Pydantic v2"""
+    """Parse section-level filter conditions and table joins using Pydantic v2."""
     filter_cond = None
     join_rule_model = None
 
@@ -71,12 +72,13 @@ def parse_section_rule(raw_notes: str) -> dict:
 
 
 def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
-    """Parse field mapping notes into typed Pydantic v2 models"""
+    """Parse field mapping notes into typed Pydantic v2 models."""
     data_file = data_file.strip() if data_file else ""
     col = col.strip() if col else ""
     notes = notes.strip() if notes else ""
     notes_upper = notes.upper()
 
+    # Case 1: Empty mapping
     if not data_file and not col and not notes:
         no_map = NoMappingRuleDSL()
         return {
@@ -86,6 +88,20 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
             "status": "AUTO_PARSED",
         }
 
+    # Case 2: Direct Mapping (Prioritize explicitly mapped Source File & Source Column)
+    if data_file and col and "IF COLUMN" not in notes_upper and "IF " not in notes_upper:
+        direct_dsl = DirectRuleDSL(
+            source_file=data_file,
+            source_column=col,
+        )
+        return {
+            "rule_type": "DIRECT",
+            "dsl_obj": direct_dsl,
+            "dsl_readable": f"{data_file}.{col}",
+            "status": "AUTO_PARSED",
+        }
+
+    # Case 3: Simple Conditional Rule
     if "IF COLUMN" in notes_upper and "ACCUMULATE" not in notes_upper:
         cond_match = re.search(
             r"IF\s+COLUMN\s+([A-Za-z0-9]+)\s*=\s*([A-Za-z0-9_\-\.\/]+)\s+THEN\s+(.*?)\s*(?:;|\b)\s*ELSE\s+(.*)",
@@ -108,6 +124,7 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
                 "status": "AUTO_PARSED",
             }
 
+    # Case 4: Matrix Lookup
     if "MATRIX" in notes_upper or "USING MATRIX" in notes_upper or "USE MATRIX" in notes_upper or "LOOKUP" in notes_upper:
         match = re.search(r"ASSIGN\s+([A-Za-z0-9_\-\.]+)", notes, re.IGNORECASE)
         ref = match.group(1) if match else "MATRIX_LOOKUP"
@@ -125,18 +142,7 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
             "status": "AUTO_PARSED",
         }
 
-    if data_file and col and (not notes or notes_upper in ["NAN", "NONE"]):
-        direct_dsl = DirectRuleDSL(
-            source_file=data_file,
-            source_column=col,
-        )
-        return {
-            "rule_type": "DIRECT",
-            "dsl_obj": direct_dsl,
-            "dsl_readable": f"{data_file}.{col}",
-            "status": "AUTO_PARSED",
-        }
-
+    # Case 5: Constant Assignment
     if notes_upper.startswith("ASSIGN"):
         val = re.sub(r"^ASSIGN\s+(ALL\s+)?", "", notes, flags=re.IGNORECASE).strip()
         const_dsl = ConstantRuleDSL(value=val)
@@ -147,6 +153,7 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
             "status": "AUTO_PARSED",
         }
 
+    # Case 6: Complex or Multi-IF free-text -> Pass to LLM
     unparsed_dsl = UnparsedRuleDSL(raw_notes=notes)
     return {
         "rule_type": "UNPARSED",
@@ -155,17 +162,12 @@ def parse_notes_to_dsl(data_file: str, col: str, notes: str) -> dict:
         "status": "NEEDS_REVIEW",
     }
 
-
 def process_mapping_sheet(
-    excel_path: str, sheet_name: str, cu_id: str = "MEDICOOP"
+    raw_df: pd.DataFrame, sheet_name: str, conn: sqlite3.Connection, cu_id: str
 ):
-    """Process a single excel mapping sheet and persist Pydantic validated rules to SQLite"""
+    """Process a single excel mapping DataFrame and persist Pydantic validated rules to SQLite."""
     print(f"\n🔄 Reading Mapping Sheet [{sheet_name}] for CU: [{cu_id}]...")
 
-    raw_df = pd.read_excel(excel_path, sheet_name=sheet_name, header=None)
-
-    conn = sqlite3.connect(DB_PATH, timeout=10)
-    conn.execute("PRAGMA journal_mode=WAL;")
     cursor = conn.cursor()
 
     stats = {
@@ -177,15 +179,16 @@ def process_mapping_sheet(
     }
     current_section = f"{sheet_name} - General"
 
-    field_col_idx = 1       # Column B
-    data_file_col_idx = 5   # Column F
-    col_letter_idx = 6      # Column G
-    notes_col_idx = 7       # Column H
+    field_col_idx = 1       # Default Column B
+    data_file_col_idx = 5   # Default Column F
+    col_letter_idx = 6      # Default Column G
+    notes_col_idx = 7       # Default Column H
 
     for idx, row in raw_df.iterrows():
         row_vals_clean = [str(v).strip() for v in row.values if pd.notna(v)]
         row_str = " | ".join(row_vals_clean)
 
+        # Dynamically detect header positions
         row_vals_lower = [v.lower() for v in row_vals_clean]
         if "field" in row_vals_lower and any("notes" in v or "additional" in v for v in row_vals_lower):
             for c_idx, val in enumerate(row.values):
@@ -230,7 +233,7 @@ def process_mapping_sheet(
                         sec_dsl_obj.model_dump_json(),
                         parsed_sec["dsl_readable"],
                         parsed_sec["status"],
-                        "ITEM_8",
+                        "SYSTEM",
                     ),
                 )
                 stats["section_rules"] += 1
@@ -241,7 +244,6 @@ def process_mapping_sheet(
 
         is_valid_field = (
             bool(target_field)
-            and "." in target_field
             and target_field.lower() not in ["nan", "none", "field", "label"]
         )
 
@@ -297,7 +299,7 @@ def process_mapping_sheet(
                     rule_dsl_obj.model_dump_json(),
                     parsed_res["dsl_readable"],
                     parsed_res["status"],
-                    "ITEM_8",
+                    "SYSTEM",
                 ),
             )
 
@@ -308,30 +310,45 @@ def process_mapping_sheet(
             else:
                 stats["needs_review"] += 1
 
-    conn.commit()
-    conn.close()
-
     print("=" * 50)
     print(f"📊 SUMMARY FOR SHEET [{sheet_name}]: Auto-Parsed: {stats['auto_parsed']} | Section Rules: {stats['section_rules']} | Needs Review: {stats['needs_review']}")
     print("=" * 50)
 
 
-def process_all_mapping_sheets(excel_path: str, cu_id: str = "MEDICOOP"):
-    """Automatically process all mapping sheets in the workbook"""
+def process_all_mapping_sheets(excel_path: str, cu_id: str, target_sheet: str = None):
+    """Automatically process mapping sheets, optionally filtering for a specific sheet."""
+    print(f"📖 Opening Excel file: {excel_path} for CU: {cu_id}")
     xl = pd.ExcelFile(excel_path)
     ignore_sheets = ["cover", "index", "readme", "instruction", "instructions", "summary"]
     
     valid_sheets = [s for s in xl.sheet_names if s.strip().lower() not in ignore_sheets]
-    print(f"🚀 Found {len(valid_sheets)} valid mapping sheets: {valid_sheets}")
 
-    for sheet in valid_sheets:
-        try:
-            process_mapping_sheet(excel_path, sheet_name=sheet, cu_id=cu_id)
-        except Exception as e:
-            print(f"❌ Error processing sheet [{sheet}]: {e}")
+    # Filter for specific sheet if target_sheet is provided
+    if target_sheet:
+        valid_sheets = [s for s in valid_sheets if target_sheet.lower() in s.lower()]
+        print(f"🎯 Target Sheet Filter Enabled: Processing only [{target_sheet}] -> Found: {valid_sheets}")
+    else:
+        print(f"🚀 Found {len(valid_sheets)} valid mapping sheets: {valid_sheets}")
 
+    if not valid_sheets:
+        print(f"⚠️ No matching sheets found for filter: '{target_sheet}'")
+        return
+
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    with sqlite3.connect(DB_PATH, timeout=10) as conn:
+        conn.execute("PRAGMA journal_mode=WAL;")
+        
+        for sheet in valid_sheets:
+            try:
+                raw_df = xl.parse(sheet, header=None)
+                process_mapping_sheet(raw_df, sheet_name=sheet, conn=conn, cu_id=cu_id)
+            except Exception as e:
+                print(f"❌ Error processing sheet [{sheet}]: {e}")
+        
+        conn.commit()
 
 def find_mapping_file(ingest_dir: Path) -> Path:
+    """Find the mapping Excel file inside workspace/ingest/."""
     for file in ingest_dir.glob("*.xlsx"):
         if file.name.startswith("~$"): continue
         if "mapping" in file.name.lower():
@@ -340,10 +357,32 @@ def find_mapping_file(ingest_dir: Path) -> Path:
     raise FileNotFoundError("❌ NO mapping file found in workspace/ingest/")
 
 
+def extract_cu_id_from_filename(filename: str) -> str:
+    """Extract CU ID dynamically by filtering out generic keywords like 'Data', 'Mapping', etc."""
+    clean_stem = Path(filename).stem  # Removes .xlsx extension
+    
+    # Ignore common workflow keywords to isolate the actual CU Name
+    ignore_keywords = {"data", "mapping", "file", "sheet", "discovery", "matrix", "test", "v1", "v2"}
+    
+    # Extract all alphanumeric words
+    words = re.findall(r"[A-Za-z0-9]+", clean_stem)
+    
+    # Find the first word that is not a generic keyword
+    for word in words:
+        if word.lower() not in ignore_keywords:
+            return word.upper()
+            
+    raise ValueError(f"❌ Cannot automatically detect CU ID from filename: '{filename}'.")
+
 if __name__ == "__main__":
     INGEST_DIR = BASE_DIR / "workspace" / "ingest"
     try:
         excel_file_path = find_mapping_file(INGEST_DIR)
-        process_all_mapping_sheets(str(excel_file_path), cu_id="MEDICOOP")
+        
+        # Read CU ID and Target Sheet dynamically from CLI arguments
+        target_cu_id = sys.argv[1].upper() if len(sys.argv) > 1 else extract_cu_id_from_filename(excel_file_path.name)
+        target_sheet = sys.argv[2] if len(sys.argv) > 2 else "Shares"  # Default to 'Shares' if not specified
+        
+        process_all_mapping_sheets(str(excel_file_path), cu_id=target_cu_id, target_sheet=target_sheet)
     except Exception as e:
         print(f"💥 Error: {e}")

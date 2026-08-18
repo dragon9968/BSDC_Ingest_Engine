@@ -1,4 +1,5 @@
 import sqlite3
+import sys
 from pathlib import Path
 import pandas as pd
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -9,14 +10,28 @@ DB_PATH = BASE_DIR / "workspace" / "rules.db"
 REPORT_DIR = BASE_DIR / "workspace" / "reports"
 
 
-def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
-    """ITEM #13: Export Rule Verification Report properly sorted according to Mapping file"""
+def get_available_cu_ids(db_path: Path) -> list[str]:
+    """Retrieve distinct non-global CU IDs stored in the rule_store database."""
+    if not db_path.exists():
+        return []
+    with sqlite3.connect(db_path) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT DISTINCT cu_id FROM rule_store WHERE cu_id IS NOT NULL AND cu_id != '' AND is_global != 1"
+        )
+        rows = cursor.fetchall()
+        return [r[0] for r in rows if r[0]]
+
+
+def export_rule_verification_report(cu_id: str) -> Path:
+    """Export Rule Verification Report properly sorted according to Mapping file for a specific CU."""
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
     report_file = REPORT_DIR / f"Rule_Verification_Report_{cu_id}.xlsx"
 
-    conn = sqlite3.connect(DB_PATH)
-    
-    # 💡 STANDARD SORTING: Use `ORDER BY id ASC` to maintain original Mapping file flow
+    if not DB_PATH.exists():
+        print(f"❌ Database not found at {DB_PATH}. Please run rule_engine.py first!")
+        return report_file
+
     query = """
         SELECT 
             id AS "Rule_ID",
@@ -36,11 +51,11 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
         ORDER BY id ASC
     """
 
-    df = pd.read_sql_query(query, conn, params=(cu_id,))
-    conn.close()
+    with sqlite3.connect(DB_PATH) as conn:
+        df = pd.read_sql_query(query, conn, params=(cu_id,))
 
     if df.empty:
-        print("⚠️ No Rule data in DB to export report!")
+        print(f"⚠️ No Rule data in DB to export report for CU: [{cu_id}]!")
         return report_file
 
     # Add columns for QA assessment
@@ -78,7 +93,7 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
         # Format QA Decision cells with light yellow background
         qa_fill = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
 
-        ws.freeze_panes = "A2" # Freeze header row
+        ws.freeze_panes = "A2"  # Freeze header row
 
         for col_num, col_name in enumerate(df.columns, 1):
             cell = ws.cell(row=1, column=col_num)
@@ -110,74 +125,74 @@ def export_rule_verification_report(cu_id: str = "MEDICOOP") -> Path:
             col_letter = get_column_letter(col[0].column)
             ws.column_dimensions[col_letter].width = min(max(max_len + 3, 12), 50)
 
-    print(f"📊 [ITEM #13] Successfully generated Verification Report for QA at:")
+    print(f"📊 Successfully generated Verification Report for CU [{cu_id}] at:")
     print(f"   👉 {report_file.resolve()}\n")
     return report_file
 
 
 def apply_qa_decisions(reviewed_report_path: Path):
-    """ITEM #14: Read QA reviewed file -> Update SQLite & Save Audit History to rule_history"""
+    """Read QA reviewed Excel file -> Update SQLite & Save Audit History to rule_history table."""
     if not reviewed_report_path.exists():
         print(f"❌ Reviewed report file not found: {reviewed_report_path}")
         return
 
     df = pd.read_excel(reviewed_report_path, sheet_name="Rule_Verification")
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
+    
     stats = {"approved": 0, "edited": 0, "rejected": 0, "skipped": 0}
 
-    for idx, row in df.iterrows():
-        rule_id = int(row["Rule_ID"])
-        decision = str(row.get("Decision (QA)", "")).strip().upper()
-        qa_edited_dsl = str(row.get("QA Edited DSL", "")).strip()
-        reviewer = str(row.get("QA Reviewer", "")).strip() or "QA_USER"
-        qa_notes = str(row.get("QA Notes", "")).strip()
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
 
-        if pd.isna(decision) or not decision or decision not in ["APPROVE", "EDIT", "REJECT"]:
-            stats["skipped"] += 1
-            continue
+        for idx, row in df.iterrows():
+            rule_id = int(row["Rule_ID"])
+            decision = str(row.get("Decision (QA)", "")).strip().upper()
+            qa_edited_dsl = str(row.get("QA Edited DSL", "")).strip()
+            reviewer = str(row.get("QA Reviewer", "")).strip() or "QA_USER"
+            qa_notes = str(row.get("QA Notes", "")).strip()
 
-        cursor.execute("SELECT dsl_readable, cu_id, sheet_name, section_name, target_field FROM rule_store WHERE id = ?", (rule_id,))
-        curr_rule = cursor.fetchone()
-        if not curr_rule:
-            continue
+            if pd.isna(decision) or not decision or decision not in ["APPROVE", "EDIT", "REJECT"]:
+                stats["skipped"] += 1
+                continue
 
-        prev_dsl, cu_id, sheet_name, sec_name, target_field = curr_rule
+            cursor.execute("SELECT dsl_readable, cu_id, sheet_name, section_name, target_field FROM rule_store WHERE id = ?", (rule_id,))
+            curr_rule = cursor.fetchone()
+            if not curr_rule:
+                continue
 
-        new_dsl = prev_dsl
-        new_status = "APPROVED"
+            prev_dsl, cu_id, sheet_name, sec_name, target_field = curr_rule
 
-        if decision == "APPROVE":
-            new_status = "VERIFIED_APPROVED"
-            stats["approved"] += 1
+            new_dsl = prev_dsl
+            new_status = "APPROVED"
 
-        elif decision == "EDIT":
-            new_status = "VERIFIED_EDITED"
-            new_dsl = qa_edited_dsl if qa_edited_dsl else prev_dsl
-            stats["edited"] += 1
+            if decision == "APPROVE":
+                new_status = "VERIFIED_APPROVED"
+                stats["approved"] += 1
 
-        elif decision == "REJECT":
-            new_status = "REJECTED"
-            stats["rejected"] += 1
+            elif decision == "EDIT":
+                new_status = "VERIFIED_EDITED"
+                new_dsl = qa_edited_dsl if qa_edited_dsl else prev_dsl
+                stats["edited"] += 1
 
-        cursor.execute("""
-            UPDATE rule_store 
-            SET dsl_readable = ?, status = ?, updated_at = CURRENT_TIMESTAMP
-            WHERE id = ?
-        """, (new_dsl, new_status, rule_id))
+            elif decision == "REJECT":
+                new_status = "REJECTED"
+                stats["rejected"] += 1
 
-        cursor.execute("""
-            INSERT INTO rule_history 
-            (rule_id, cu_id, sheet_name, section_name, target_field, action, previous_dsl, new_dsl, reviewer, review_notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (rule_id, cu_id, sheet_name, sec_name, target_field, decision, prev_dsl, new_dsl, reviewer, qa_notes))
+            cursor.execute("""
+                UPDATE rule_store 
+                SET dsl_readable = ?, status = ?, updated_at = CURRENT_TIMESTAMP
+                WHERE id = ?
+            """, (new_dsl, new_status, rule_id))
 
-    conn.commit()
-    conn.close()
+            cursor.execute("""
+                INSERT INTO rule_history 
+                (rule_id, cu_id, sheet_name, section_name, target_field, action, previous_dsl, new_dsl, reviewer, review_notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (rule_id, cu_id, sheet_name, sec_name, target_field, decision, prev_dsl, new_dsl, reviewer, qa_notes))
+
+        conn.commit()
 
     print("=" * 50)
-    print("✅ [ITEM #14] APPLIED QA DECISIONS TO DATABASE:")
+    print("✅ APPLIED QA DECISIONS TO DATABASE:")
     print(f"   - Approved: {stats['approved']} rules")
     print(f"   - Edited: {stats['edited']} rules")
     print(f"   - Rejected: {stats['rejected']} rules")
@@ -186,16 +201,22 @@ def apply_qa_decisions(reviewed_report_path: Path):
 
 
 if __name__ == "__main__":
-    import sys
-
-    if len(sys.argv) == 1:
-        report_path = export_rule_verification_report(cu_id="MEDICOOP")
-        print("💡 INSTRUCTIONS FOR NEXT STEPS:")
-        print("1. Open the generated Excel report in workspace/reports/")
-        print("2. Enter decision in 'Decision (QA)' column (APPROVE / EDIT / REJECT)")
-        print("3. Save the file and run the following command to Apply results:")
-        print(f"   python qa_report_engine.py \"{report_path}\"")
-
+    if len(sys.argv) > 1:
+        arg_val = sys.argv[1]
+        
+        # If user passes an existing excel file path or 'apply' command
+        if Path(arg_val).exists() and arg_val.endswith(".xlsx"):
+            apply_qa_decisions(Path(arg_val))
+        elif arg_val.lower() == "apply" and len(sys.argv) > 2:
+            apply_qa_decisions(Path(sys.argv[2]))
+        else:
+            # Treat argument as CU_ID to export report
+            export_rule_verification_report(cu_id=arg_val.upper())
     else:
-        reviewed_file = Path(sys.argv[1])
-        apply_qa_decisions(reviewed_file)
+        # Auto-detect CU IDs from database and export report for each
+        available_cus = get_available_cu_ids(DB_PATH)
+        if not available_cus:
+            print("❌ No rule data found in DB. Please run rule_engine.py first!")
+        else:
+            for target_cu in available_cus:
+                export_rule_verification_report(cu_id=target_cu)
